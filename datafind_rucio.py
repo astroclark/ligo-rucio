@@ -81,10 +81,17 @@ def main():
                 opts.gps_end_time)
     else:
         frame_urls = frame_paths(opts.frame_type, opts.gps_start_time,
-                opts.gps_end_time)
-    
+                opts.gps_end_time, url_type='file')
 
+    return frame_urls
 
 if __name__ == "__main__":
-    main()
+
+    frame_urls = main()
+
+    print "Frames matching Type & Interval:"
+    for fu in frame_urls:
+        print fu
+
+
 
