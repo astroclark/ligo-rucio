@@ -1,12 +1,14 @@
-FROM pycbc/pycbc-el7
+#FROM containers.ligo.org/lscsoft/lalsuite:nightly
+FROM ligo/software:jessie
 
 RUN echo "Building ligo-rucio dev image"
 MAINTAINER James Alexander Clark <james.clark@ligo.org>
 
+# Dependencies
+RUN python -m pip install --upgrade setuptools pip \
+	&& python -m pip install git+https://github.com/ligo-cbc/pycbc@v1.9.0#egg=pycbc --process-dependency-links  \
+    && python -m pip install --upgrade rucio-clients
 
-# Install Rucio
-USER root
-RUN pip install --upgrade pip && pip install --upgrade rucio-clients
 
 #USER ligo-rucio
 RUN groupadd -r ligo-rucio && useradd --no-log-init -r -g ligo-rucio ligo-rucio
