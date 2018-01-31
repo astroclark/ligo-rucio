@@ -6,8 +6,9 @@ MAINTAINER James Alexander Clark <james.clark@ligo.org>
 
 # Dependencies
 RUN python -m pip install --upgrade setuptools pip \
-	&& python -m pip install git+https://github.com/ligo-cbc/pycbc@v1.9.0#egg=pycbc --process-dependency-links  \
+	&& python -m pip install git+https://github.com/ligo-cbc/pycbc --process-dependency-links  \
     && python -m pip install --upgrade rucio-clients
+	#&& python -m pip install git+https://github.com/ligo-cbc/pycbc@v1.9.0#egg=pycbc --process-dependency-links  \
 
 
 #USER ligo-rucio

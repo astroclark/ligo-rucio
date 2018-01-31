@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #
-# datafind_rucio.py
+# insert_lvc_dataset.py
 #
 # Copyright (C) 2018  James Alexander Clark <james.clark@ligo.org>
 #
@@ -18,8 +18,12 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 """
-Query a datafind server to locate a list of local frame files and pass that list
-to rucio
+Command line tool to register LIGO/Virgo datasets into rucio.
+
+Queries a datafind server to locate a list of local frame files of a given type
+(e.g., H1_HOFT_C00) in some time span.
+
+Rucio scope is determined by run (engineering/observing run).
 """
 
 import warnings
