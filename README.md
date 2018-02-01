@@ -31,4 +31,13 @@ The (current) proposed LIGO arrangement is simpler:
 
 
 Here's a run-through of [cmsexample.py](https://github.com/astroclark/ligo-rucio/blob/master/cmsexample.py):
- 1. Instantiate the `DataSetInjector` object
+ 1. Instantiate the `DataSetInjector` object, a general class for injecting a
+    cms dataset into rucio
+ 1. `DataSetInjector` has methods to create containers and register files and
+    datasets
+ 1. This class has methods for finding the rucio url and filenames
+
+I do not need anything to do with rucio containers (yet) so can just mimic the
+parts associated with file and data set registration, and some of the sanity
+checking.  I should be able to swap out my existing routines for translating
+LIGO file URLs to Rucio DIDs.
