@@ -31,7 +31,7 @@ import os,sys
 import warnings
 import argparse
 from pycbc.frame import frame_paths
-from pycbc.frame.losc import losc_frame_urls
+from pycbc.frame.losc import losc_frame_pfns
 
 #   from gfal2 import Gfal2Context, GError
 #   import rucio.rse.rsemanager as rsemgr
@@ -57,27 +57,61 @@ try:
 except:
     LIGO_DATAFIND_SERVER="datafind.ligo.org:443"
 
-def rucio2ligo(dids):
-    """
-    Construct the expected path to frames, given a Rucio DID
+#   def rucio2ligo(dids):
+#       """
+#       Construct the expected path to frames, given a Rucio DID
+#
+#       Path should be <run>/<type>/<ifo>/<site>-<type>-<day>
+#
+#       E.g., ER8/H1_HOFT_C00/H1/H-H1_HOFT_C00-1126
+#       """
+#
+#       if not hasattr(dids,"__iter__"):
+#           dids = [dids]
+#
+#       frame_pfns = []
+#       for did in dids:
+#           run=did.split(":")[0]
+#           name=did.split(":")[1]
+#           ftype=name.split("-")[1]
+#           ifo=ftype[0]
+#           day=name.split('-')[2][:4]
+#           frame_pfns.append(os.path.join(frame_path,run,ftype,ifo,day,name))
+#       return frame_pfns
 
-    Path should be <run>/<type>/<ifo>/<site>-<type>-<day>
+def parse_cmdline():
 
-    E.g., ER8/H1_HOFT_C00/H1/H-H1_HOFT_C00-1126
-    """
+    parser = argparse.ArgumentParser(description=__doc__)
 
-    if not hasattr(dids,"__iter__"):
-        dids = [dids]
+    parser.add_argument("--verbose", default=False, action="store_true",
+            help="""Instead of a progress bar, Print distances & SNRs to
+            stdout""")
 
-    frame_urls = []
-    for did in dids:
-        run=did.split(":")[0]
-        name=did.split(":")[1]
-        ftype=name.split("-")[1]
-        ifo=ftype[0]
-        day=name.split('-')[2][:4]
-        frame_urls.append(os.path.join(frame_path,run,ftype,ifo,day,name))
-    return frame_urls
+    parser.add_argument("--gps-start-time", metavar="GPSSTART", type=int,
+            help="GPS start time of segment (e.g., 1126259457)",
+            required=True)
+
+    parser.add_argument("--gps-end-time", metavar="GPSEND", type=int,
+            help="GPS end time of segments (e.g., 1126259467)",
+            required=True)
+
+    parser.add_argument("--open-data", default=False, action="store_true",
+            help="""Use the LIGO open science center (LOSC) data""",
+            required=False)
+
+    parser.add_argument("--ifo", type=str, default=None, required='--open-data'
+            in sys.argv, help="""Interferometer label (e.g., H (LIGO Hanford), L
+            (LIGO Livingston), V (Virgo), ...""")
+
+    parser.add_argument("--frame-type", type=str, default=None,
+            required='--open-data' not in sys.argv, help="""frame type (e.g.,
+            H1_HOFT_C02. See e.g., https://dcc.ligo.org/LIGO-T010150/public)""")
+
+    #parser.add_argument('--version', action='version', version=__version__)
+    ap = parser.parse_args()
+
+    return ap
+
 
 class DatasetInjector(object):
     """
@@ -151,39 +185,6 @@ class DatasetInjector(object):
                 warnings.warn(warnstr, Warning)
 
 
-def parse_cmdline():
-
-    parser = argparse.ArgumentParser(description=__doc__)
-
-    parser.add_argument("--verbose", default=False, action="store_true",
-            help="""Instead of a progress bar, Print distances & SNRs to
-            stdout""")
-
-    parser.add_argument("--gps-start-time", metavar="GPSSTART", type=int,
-            help="GPS start time of segment (e.g., 1126259457)",
-            required=True)
-
-    parser.add_argument("--gps-end-time", metavar="GPSEND", type=int,
-            help="GPS end time of segments (e.g., 1126259467)",
-            required=True)
-
-    parser.add_argument("--open-data", default=False, action="store_true",
-            help="""Use the LIGO open science center (LOSC) data""",
-            required=False)
-
-    parser.add_argument("--ifo", type=str, default=None, required='--open-data'
-            in sys.argv, help="""Interferometer label (e.g., H (LIGO Hanford), L
-            (LIGO Livingston), V (Virgo), ...""")
-
-    parser.add_argument("--frame-type", type=str, default=None,
-            required='--open-data' not in sys.argv, help="""frame type (e.g.,
-            H1_HOFT_C02. See e.g., https://dcc.ligo.org/LIGO-T010150/public)""")
-
-    #parser.add_argument('--version', action='version', version=__version__)
-    ap = parser.parse_args()
-
-    return ap
-
 
 #########################################################################
 
@@ -199,10 +200,42 @@ def main():
     print dataset.rucio_names
 
 
-    R = ReplicaClient()
+    # XXX Testing area: tinker here then move to methods in DatasetInjector
 
-    REPLICAS = list(R.list_replicas([{'scope': OPTIONS.scope, 'name': OPTIONS.name}]))
+    replica_client = ReplicaClient()
+    
+    #
+    # 1. Create the list of files to replicate
+    #
 
+    # -- a single replica has a scope, name, checksum, size and path to the
+    # actual frame
+    #
+    # See e.g., register_replica() in cmsexample.py
+
+    replicas = list(replica_client.list_replicas([{'scope': scope, 'name': name}]))
+
+    replica = [{
+        'scope': scope,
+        'name' : name,
+        'adler32': CHECKSUM,
+        'bytes': SIZE,
+        'pfn': frame_path
+    }]
+
+    replica_client.add_replicas(rse=rse, files=replica)
+
+    #
+    # 2. Register this list of replicas with a dataset
+    #
+    
+    # -- We just need to attach each file to the dataset
+    #
+    # See e.g., attach_file in register() in cmsexample.py:
+
+    # for filemd in block['files']:
+    #     self.register_replica(filemd)
+    #     self.attach_file(filemd['name'], block['name'])
 
 
 if __name__ == "__main__":
