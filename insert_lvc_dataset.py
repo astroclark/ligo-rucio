@@ -33,13 +33,16 @@ import argparse
 from pycbc.frame import frame_paths
 from pycbc.frame.losc import losc_frame_urls
 
-from gfal2 import Gfal2Context, GError
-import rucio.rse.rsemanager as rsemgr
-from rucio.client.didclient import DIDClient
+#   from gfal2 import Gfal2Context, GError
+#   import rucio.rse.rsemanager as rsemgr
+#   from rucio.client.didclient import DIDClient
+#   from rucio.client.replicaclient import ReplicaClient
+#   from rucio.common.exception import DataIdentifierAlreadyExists
+#   from rucio.common.exception import RucioException
+#   from rucio.common.exception import FileAlreadyExists
+
 from rucio.client.replicaclient import ReplicaClient
-from rucio.common.exception import DataIdentifierAlreadyExists
-from rucio.common.exception import RucioException
-from rucio.common.exception import FileAlreadyExists
+import rucio.rse.rsemanager as rsemgr
 
 # FIXME: These times are non-exhaustive and inexact
 DATA_RUNS={
@@ -49,7 +52,10 @@ DATA_RUNS={
         'O2':(1164499217,1187654418)
         }
 
-DATAFIND_SERVER="datafind.ligo.org:443"
+try:
+    LIGO_DATAFIND_SERVER=os.environ['LIGO_DATAFIND_SERVER']
+except:
+    LIGO_DATAFIND_SERVER="datafind.ligo.org:443"
 
 def rucio2ligo(dids):
     """
@@ -88,14 +94,13 @@ class DatasetInjector(object):
 
         self.start_time = start_time
         self.end_time = end_time
+        self.frtype = frtype
 
         self.site = site
 
         if rse is None:
             rse = site
         self.rse = rse
-        self.scope = scope
-        self.uuid = uuid
         self.check = check
         self.lifetime = lifetime
         self.dry_run = dry_run
@@ -118,7 +123,7 @@ class DatasetInjector(object):
         print "Interval: ({0},{1}]".format(self.start_time, self.end_time)
 
         self.frames = frame_paths(self.frtype, self.start_time, self.end_time,
-                url_type='file')
+                url_type='file', server=LIGO_DATAFIND_SERVER)
 
         if not hasattr(self.frames,"__iter__"):
             self.frames = [self.frames]
@@ -128,7 +133,7 @@ class DatasetInjector(object):
         Determine the Rucio DIDs for given frame URLs
         """
 
-        self.rucio_frames = []
+        self.rucio_names = []
         for frame in self.frames:
             name = os.path.basename(frame)
             # FIXME check frame name is valid (hard to see how it wouldn't be if
@@ -138,21 +143,12 @@ class DatasetInjector(object):
             # Identify data run (scope)
             for scope in DATA_RUNS:
                 if DATA_RUNS[scope][0] <= start <= DATA_RUNS[scope][1]:
-                    self.rucio_frames.append(":".join([scope, name]))
+                    self.rucio_names.append(":".join([scope, name]))
                     break
             else:
                 warnstr=("Frame {frame} not in known data-gathering run. Setting"
                         " scope=AW".format(frame=name))
                 warnings.warn(warnstr, Warning)
-
-#        self.url = ''
-
-#       self.getmetadata()
-#       self.get_global_url()
-#       self.didc = DIDClient()
-#       self.repc = ReplicaClient()
-#
-#       self.gfal = Gfal2Context()
 
 
 def parse_cmdline():
@@ -197,7 +193,16 @@ def main():
     ap = parse_cmdline()
 
     dataset = DatasetInjector(ap.gps_start_time, ap.gps_end_time, ap.frame_type)
+    print "Frames:"
     print dataset.frames
+    print "Rucio names:"
+    print dataset.rucio_names
+
+
+    R = ReplicaClient()
+
+    REPLICAS = list(R.list_replicas([{'scope': OPTIONS.scope, 'name': OPTIONS.name}]))
+
 
 
 if __name__ == "__main__":
