@@ -21,5 +21,10 @@ is a command line tool for registering a CMS dataset into rucio.  [This set of
 slides](https://indico.fnal.gov/event/16010/contribution/1/material/slides/0.pdf)
 describes the CMS evaluation.  The CMS hierachy is more complicated than (at
 least our initial test) in LIGO.  In CMS:
- * Datasets are stored in rucio containers
- * CMS "blocks" are stored in rucio datasets
+ * Files: ~4GB
+ * Blocks (Rucio dataset): chunks of ~100 files.  This is the typical unit of data transfer.
+ * Datasets (Rucio container): N blocks with some physical meaning
+
+The (current) proposed LIGO arrangement is simpler:
+ * LIGO runs (ER8, O1, ...):  Rucio scope
+ * LIGO dataset == Rucio dataset
