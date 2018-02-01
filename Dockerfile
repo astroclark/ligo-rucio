@@ -7,6 +7,8 @@ RUN pip install rucio
 
 # Install dependecies
 RUN yum install -y \
+    ldg-client \
+    wget \
     gfal2 \
     gfal2-plugin-file \
     gfal2-plugin-gridftp \

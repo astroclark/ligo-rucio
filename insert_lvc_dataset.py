@@ -42,47 +42,14 @@ from rucio.common.exception import RucioException
 from rucio.common.exception import FileAlreadyExists
 
 # FIXME: These times are non-exhaustive and inexact
-data_runs={
+DATA_RUNS={
         'ER8':(1123858817,1126623617),
         'O1':(1126623617,1137254417),
         'ER9':(1152136817,1152169157),
         'O2':(1164499217,1187654418)
         }
 
-frame_path="/cvmfs/oasis.opensciencegrid.org/ligo/frames"
-
-def parse():
-
-    parser = argparse.ArgumentParser(description=__doc__)
-
-    parser.add_argument("--verbose", default=False, action="store_true",
-            help="""Instead of a progress bar, Print distances & SNRs to
-            stdout""")
-
-    parser.add_argument("--gps-start-time", metavar="GPSSTART", type=int,
-            help="GPS start time of segment (e.g., 1126259457)",
-            required=True)
-
-    parser.add_argument("--gps-end-time", metavar="GPSEND", type=int,
-            help="GPS end time of segments (e.g., 1126259467)",
-            required=True)
-
-    parser.add_argument("--open-data", default=False, action="store_true",
-            help="""Use the LIGO open science center (LOSC) data""",
-            required=False)
-
-    parser.add_argument("--ifo", type=str, default=None, required='--open-data'
-            in sys.argv, help="""Interferometer label (e.g., H (LIGO Hanford), L
-            (LIGO Livingston), V (Virgo), ...""")
-
-    parser.add_argument("--frame-type", type=str, default=None,
-            required='--open-data' not in sys.argv, help="""frame type (e.g.,
-            H1_HOFT_C02. See e.g., https://dcc.ligo.org/LIGO-T010150/public)""")
-
-    #parser.add_argument('--version', action='version', version=__version__)
-    ap = parser.parse_args()
-
-    return ap
+DATAFIND_SERVER="datafind.ligo.org:443"
 
 def rucio2ligo(dids):
     """
@@ -169,8 +136,8 @@ class DatasetInjector(object):
             start = int(name.split('-')[2])
 
             # Identify data run (scope)
-            for scope in data_runs:
-                if data_runs[scope][0] <= start <= data_runs[scope][1]:
+            for scope in DATA_RUNS:
+                if DATA_RUNS[scope][0] <= start <= DATA_RUNS[scope][1]:
                     self.rucio_frames.append(":".join([scope, name]))
                     break
             else:
@@ -188,12 +155,46 @@ class DatasetInjector(object):
 #       self.gfal = Gfal2Context()
 
 
+def parse_cmdline():
+
+    parser = argparse.ArgumentParser(description=__doc__)
+
+    parser.add_argument("--verbose", default=False, action="store_true",
+            help="""Instead of a progress bar, Print distances & SNRs to
+            stdout""")
+
+    parser.add_argument("--gps-start-time", metavar="GPSSTART", type=int,
+            help="GPS start time of segment (e.g., 1126259457)",
+            required=True)
+
+    parser.add_argument("--gps-end-time", metavar="GPSEND", type=int,
+            help="GPS end time of segments (e.g., 1126259467)",
+            required=True)
+
+    parser.add_argument("--open-data", default=False, action="store_true",
+            help="""Use the LIGO open science center (LOSC) data""",
+            required=False)
+
+    parser.add_argument("--ifo", type=str, default=None, required='--open-data'
+            in sys.argv, help="""Interferometer label (e.g., H (LIGO Hanford), L
+            (LIGO Livingston), V (Virgo), ...""")
+
+    parser.add_argument("--frame-type", type=str, default=None,
+            required='--open-data' not in sys.argv, help="""frame type (e.g.,
+            H1_HOFT_C02. See e.g., https://dcc.ligo.org/LIGO-T010150/public)""")
+
+    #parser.add_argument('--version', action='version', version=__version__)
+    ap = parser.parse_args()
+
+    return ap
+
+
 #########################################################################
 
 def main():
 
     # Parse input
-    ap = parse()
+    ap = parse_cmdline()
 
     dataset = DatasetInjector(ap.gps_start_time, ap.gps_end_time, ap.frame_type)
     print dataset.frames
