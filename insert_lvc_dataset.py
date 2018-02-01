@@ -34,6 +34,14 @@ import argparse
 from pycbc.frame import frame_paths
 from pycbc.frame.losc import losc_frame_urls
 
+from gfal2 import Gfal2Context, GError
+import rucio.rse.rsemanager as rsemgr
+from rucio.client.didclient import DIDClient
+from rucio.client.replicaclient import ReplicaClient
+from rucio.common.exception import DataIdentifierAlreadyExists
+from rucio.common.exception import RucioException
+from rucio.common.exception import FileAlreadyExists
+
 # FIXME: These times are non-exhaustive and inexact
 obs_runs={
         'ER8':(1123858817,1126623617),
