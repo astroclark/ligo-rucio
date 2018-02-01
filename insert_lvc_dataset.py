@@ -26,10 +26,9 @@ Queries a datafind server to locate a list of local frame files of a given type
 Rucio scope is determined by run (engineering/observing run).
 """
 
-import warnings
-warnings.simplefilter("ignore")
 
 import os,sys
+import warnings
 import argparse
 from pycbc.frame import frame_paths
 from pycbc.frame.losc import losc_frame_urls
@@ -43,7 +42,7 @@ from rucio.common.exception import RucioException
 from rucio.common.exception import FileAlreadyExists
 
 # FIXME: These times are non-exhaustive and inexact
-obs_runs={
+data_runs={
         'ER8':(1123858817,1126623617),
         'O1':(1126623617,1137254417),
         'ER9':(1152136817,1152169157),
@@ -85,34 +84,6 @@ def parse():
 
     return ap
 
-def ligo2rucio(frame_urls):
-    """
-    Determine the Rucio DIDs for given frame URLs
-
-    Take scope=frame type for now
-    """
-
-    if not hasattr(frame_urls,"__iter__"):
-        frame_urls = [frame_urls]
-
-    dids = []
-    for frame_url in frame_urls:
-        name = os.path.basename(frame_url)
-        start = int(name.split('-')[2])
-        #end = str(int(start)+int(name.aplit('-')[-1].replace('.gwf','')))
-
-        # Identify data run
-        for scope in obs_runs:
-            if obs_runs[scope][0] <= start <= obs_runs[scope][1]:
-                dids.append(":".join([scope, name]))
-                break
-        else:
-            print "Frame time not in known data-gathering run:"
-            print obs_runs
-            sys.exit(-1)
-
-    return dids
-
 def rucio2ligo(dids):
     """
     Construct the expected path to frames, given a Rucio DID
@@ -137,11 +108,16 @@ def rucio2ligo(dids):
 
 class DatasetInjector(object):
     """
-    General Class for injecting a cms dataset in rucio
+    General Class for injecting a LIGO dataset in rucio
+
+    1) Find frames with gw_data_find
+    2) Convert frame names to rucio DIDs
+    3) Create Rucio dataset
+    4) Register Rucio dataset
     """
 
-    def __init__(self, start_time, end_time, frtype, site, rse=None, check=True,
-            lifetime=None, dry_run=False):
+    def __init__(self, start_time, end_time, frtype, site=None, rse=None,
+            check=True, lifetime=None, dry_run=False):
 
         self.start_time = start_time
         self.end_time = end_time
@@ -158,7 +134,49 @@ class DatasetInjector(object):
         self.dry_run = dry_run
 
         # Locate frames
-        self.frame_paths = 
+        self.find_frames()
+
+        # Create rucio names
+        self.frames2rucio()
+
+    def find_frames(self):
+        """
+        Query the datafind server to find frame files matching time interval and
+        frame type
+        """
+
+	# Datafind query
+	print "Querying datafind server:"
+	print "Type: ", self.frtype
+        print "Interval: ({0},{1}]".format(self.start_time, self.end_time)
+
+        self.frames = frame_paths(self.frtype, self.start_time, self.end_time,
+                url_type='file')
+
+        if not hasattr(self.frames,"__iter__"):
+            self.frames = [self.frames]
+
+    def frames2rucio(self):
+        """
+        Determine the Rucio DIDs for given frame URLs
+        """
+
+        self.rucio_frames = []
+        for frame in self.frames:
+            name = os.path.basename(frame)
+            # FIXME check frame name is valid (hard to see how it wouldn't be if
+            # it came from gw_data_find)
+            start = int(name.split('-')[2])
+
+            # Identify data run (scope)
+            for scope in data_runs:
+                if data_runs[scope][0] <= start <= data_runs[scope][1]:
+                    self.rucio_frames.append(":".join([scope, name]))
+                    break
+            else:
+                warnstr=("Frame {frame} not in known data-gathering run. Setting"
+                        " scope=AW".format(frame=name))
+                warnings.warn(warnstr, Warning)
 
 #        self.url = ''
 
@@ -177,22 +195,8 @@ def main():
     # Parse input
     ap = parse()
 
-    # Retrieve URLs of frames matching query
-    frames = frame_urls(ap)
-
-    # Convert to Rucio DIDs:
-    dids = ligo2rucio(frames)
-
-    print "Frames converted to DIDs:"
-    for frame, did in zip(frames, dids):
-        print "%s -> %s" % (frame, did)
-
-    # Convert DIDs back to frames
-    frames = rucio2ligo(dids)
-
-    print "DIDs converted to frames:"
-    for did, frame in zip(dids, frames):
-        print "%s -> %s" % (did, frame)
+    dataset = DatasetInjector(ap.gps_start_time, ap.gps_end_time, ap.frame_type)
+    print dataset.frames
 
 
 if __name__ == "__main__":
