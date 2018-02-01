@@ -85,22 +85,6 @@ def parse():
 
     return ap
 
-
-def frame_urls(ap):
-
-    # Datafind query
-    print "Querying datafind server:"
-    print "Type: ", ap.frame_type
-    print "Interval: ({0},{1}]".format(ap.gps_start_time, ap.gps_end_time)
-
-    if ap.open_data:
-        frame_urls = losc_frame_urls(ap.ifo, ap.gps_start_time,
-                ap.gps_end_time)
-    else:
-        frame_urls = frame_paths(ap.frame_type, ap.gps_start_time,
-                ap.gps_end_time, url_type='file')
-    return frame_urls
-
 def ligo2rucio(frame_urls):
     """
     Determine the Rucio DIDs for given frame URLs
@@ -151,6 +135,42 @@ def rucio2ligo(dids):
         frame_urls.append(os.path.join(frame_path,run,ftype,ifo,day,name))
     return frame_urls
 
+class DatasetInjector(object):
+    """
+    General Class for injecting a cms dataset in rucio
+    """
+
+    def __init__(self, start_time, end_time, frtype, site, rse=None, check=True,
+            lifetime=None, dry_run=False):
+
+        self.start_time = start_time
+        self.end_time = end_time
+
+        self.site = site
+
+        if rse is None:
+            rse = site
+        self.rse = rse
+        self.scope = scope
+        self.uuid = uuid
+        self.check = check
+        self.lifetime = lifetime
+        self.dry_run = dry_run
+
+        # Locate frames
+        self.frame_paths = 
+
+#        self.url = ''
+
+#       self.getmetadata()
+#       self.get_global_url()
+#       self.didc = DIDClient()
+#       self.repc = ReplicaClient()
+#
+#       self.gfal = Gfal2Context()
+
+
+#########################################################################
 
 def main():
 
