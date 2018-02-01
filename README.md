@@ -28,3 +28,7 @@ least our initial test) in LIGO.  In CMS:
 The (current) proposed LIGO arrangement is simpler:
  * LIGO runs (ER8, O1, ...):  Rucio scope
  * LIGO dataset == Rucio dataset
+
+
+Here's a run-through of [cmsexample.py](https://github.com/astroclark/ligo-rucio/blob/master/cmsexample.py):
+ 1. Instantiate the `DataSetInjector` object
