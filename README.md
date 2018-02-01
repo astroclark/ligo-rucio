@@ -31,4 +31,4 @@ The (current) proposed LIGO arrangement is simpler:
 
 
 Here's a run-through of [cmsexample.py](https://github.com/astroclark/ligo-rucio/blob/master/cmsexample.py):
- 1. Instantiate the ```DataSetInjector``` object
+ 1. Instantiate the `DataSetInjector` object
