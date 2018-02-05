@@ -31,9 +31,6 @@ import os,sys
 import warnings
 import argparse
 from pycbc.frame import frame_paths
-from pycbc.frame.losc import losc_frame_pfns
-
-#   from gfal2 import Gfal2Context, GError
 #   import rucio.rse.rsemanager as rsemgr
 #   from rucio.client.didclient import DIDClient
 #   from rucio.client.replicaclient import ReplicaClient
@@ -41,6 +38,7 @@ from pycbc.frame.losc import losc_frame_pfns
 #   from rucio.common.exception import RucioException
 #   from rucio.common.exception import FileAlreadyExists
 
+from gfal2 import Gfal2Context, GError
 from rucio.client.replicaclient import ReplicaClient
 import rucio.rse.rsemanager as rsemgr
 
@@ -82,6 +80,9 @@ except:
 def parse_cmdline():
 
     parser = argparse.ArgumentParser(description=__doc__)
+
+    parser.add_argument("--rse", type=str, default=None, required=True,
+            help="""Rucio storage element to host frames""")
 
     parser.add_argument("--verbose", default=False, action="store_true",
             help="""Instead of a progress bar, Print distances & SNRs to
@@ -139,11 +140,13 @@ class DatasetInjector(object):
         self.lifetime = lifetime
         self.dry_run = dry_run
 
+        self.gfal = Gfal2Context()
+
         # Locate frames
-        self.find_frames()
+        frames = self.find_frames()
 
         # Create rucio names
-        self.frames2rucio()
+        self.frames2rucio(frames)
 
     def find_frames(self):
         """
@@ -151,39 +154,62 @@ class DatasetInjector(object):
         frame type
         """
 
-	# Datafind query
-	print "Querying datafind server:"
-	print "Type: ", self.frtype
+        # Datafind query
+        print "Querying datafind server:"
+        print "Type: ", self.frtype
         print "Interval: ({0},{1}]".format(self.start_time, self.end_time)
 
-        self.frames = frame_paths(self.frtype, self.start_time, self.end_time,
+        frames = frame_paths(self.frtype, self.start_time, self.end_time,
                 url_type='file', server=LIGO_DATAFIND_SERVER)
 
-        if not hasattr(self.frames,"__iter__"):
-            self.frames = [self.frames]
+        if not hasattr(frames,"__iter__"):
+            frames = [self.frames]
 
-    def frames2rucio(self):
+        return frames
+
+    def frames2rucio(self, frames):
         """
-        Determine the Rucio DIDs for given frame URLs
+        Determine the Rucio DIDs for given frame URLs and add to a list of dictionaries
         """
 
-        self.rucio_names = []
-        for frame in self.frames:
+        self.replicas = []
+        for frame in frames:
             name = os.path.basename(frame)
-            # FIXME check frame name is valid (hard to see how it wouldn't be if
-            # it came from gw_data_find)
-            start = int(name.split('-')[2])
+            url = "file://"+frame
+
+            size, checksum = self.check_storage(url)
 
             # Identify data run (scope)
+            start = int(name.split('-')[2])
             for scope in DATA_RUNS:
                 if DATA_RUNS[scope][0] <= start <= DATA_RUNS[scope][1]:
-                    self.rucio_names.append(":".join([scope, name]))
+                    replica = {'scope':scope,
+                            'name':name,
+                            'bytes':size,
+                            'adler32':checksum,
+                            'pfn':url}
+                    self.replicas.append(replica)
                     break
             else:
                 warnstr=("Frame {frame} not in known data-gathering run. Setting"
                         " scope=AW".format(frame=name))
                 warnings.warn(warnstr, Warning)
 
+
+    def check_storage(self, url):
+        """
+        Check size and checksum of a file on storage
+        """
+        print("checking url %s" % url)
+        try:
+            size = self.gfal.stat(str(url)).st_size
+            checksum = self.gfal.checksum(str(url), 'adler32')
+            print("got size and checksum of file: pfn=%s size=%s checksum=%s"
+                  % (url, size, checksum))
+        except GError:
+            print("no file found at %s" % url)
+            return False
+        return size, checksum
 
 
 #########################################################################
@@ -194,36 +220,19 @@ def main():
     ap = parse_cmdline()
 
     dataset = DatasetInjector(ap.gps_start_time, ap.gps_end_time, ap.frame_type)
-    print "Frames:"
-    print dataset.frames
-    print "Rucio names:"
-    print dataset.rucio_names
+    print "Rucio replicas:"
+    print dataset.replicas
 
 
     # XXX Testing area: tinker here then move to methods in DatasetInjector
-
     replica_client = ReplicaClient()
     
     #
     # 1. Create the list of files to replicate
     #
-
-    # -- a single replica has a scope, name, checksum, size and path to the
-    # actual frame
-    #
-    # See e.g., register_replica() in cmsexample.py
-
-    replicas = list(replica_client.list_replicas([{'scope': scope, 'name': name}]))
-
-    replica = [{
-        'scope': scope,
-        'name' : name,
-        'adler32': CHECKSUM,
-        'bytes': SIZE,
-        'pfn': frame_path
-    }]
-
-    replica_client.add_replicas(rse=rse, files=replica)
+    # --- This list is in dataset.replicas
+    print "adding replicas to RSE"
+    replica_client.add_replicas(rse=ap.rse, files=dataset.replicas)
 
     #
     # 2. Register this list of replicas with a dataset
