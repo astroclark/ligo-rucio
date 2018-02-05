@@ -15,7 +15,7 @@ The first thing we need is an
     ```
     rucio-admin rse add LIGOTEST
     ```
- 1. Add supported protocols (e.g., srm, gsift, http, ...).  To begin with, we can just use gsiftp:
+ 1. Add supported protocols (e.g., srm, gsiftp, http, ...).  To begin with, we can just use gsiftp:
     ```
     rucio-admin rse add-protocol  \
         --prefix /user/ligo/rucio \
@@ -24,8 +24,50 @@ The first thing we need is an
         --hostname red-gridftp.unl.edu \
         LIGOTEST
     ```
+Note that rucio-admin operations should be performed with `RUCIO_ACCOUNT=root`
+
+### Scope
+At least for testing, we will designate scopes according to data-taking runs
+(engineering and observing runs).   To create an ER8 scope:
+```
+rucio-admin scope add --account jclark --scope ER8
+```
+See e.g., [rucio scope
+docs](https://rucio.readthedocs.io/cli_admin_examples.html#scope])
 
 ### CLI Example
+Now that we have an RSE and a scope we can experiment with the [CLI
+examples](https://rucio.readthedocs.io/cli_examples.html)
+
+ 1. Uploading a single frame with scope "ER8"
+
+```
+rucio -v upload \
+    /hdfs/frames/ER8/hoft_C02/H1/H-H1_HOFT_C02-11262/H-H1_HOFT_C02-1126256640-4096.gwf
+    --rse LIGOTEST --scope ER8 \
+    --name H-H1_HOFT_C02-1126256640-4096.gwf
+```
+Should generate something like,
+```
+2018-02-05 13:33:31,104    DEBUG    Extracting filesize (457680774) and checksum
+(ef00cf51) for file ER8:H-H1_HOFT_C02-1126256640-4096
+2018-02-05 13:33:31,106    DEBUG    Automatically setting new GUID
+2018-02-05 13:33:31,381    DEBUG    Using account root
+2018-02-05 13:33:31,381    DEBUG    Skipping dataset registration
+2018-02-05 13:33:31,381    DEBUG    Processing file
+ER8:H-H1_HOFT_C02-1126256640-4096 for upload
+2018-02-05 13:33:39,285    INFO    Local files and file
+ER8:H-H1_HOFT_C02-1126256640-4096 recorded in Rucio have the same checksum. Will
+try the upload
+2018-02-05 13:33:56,808    INFO    File ER8:H-H1_HOFT_C02-1126256640-4096
+successfully uploaded on the storage
+2018-02-05 13:33:56,809    DEBUG    sending trace
+2018-02-05 13:33:57,270    DEBUG    Finished uploading files to RSE.
+2018-02-05 13:33:57,505    INFO    Will update the file replicas states
+2018-02-05 13:33:57,586    INFO    File replicas states successfully updated
+Completed in 34.7796 sec.
+```
+
 
 ### Python Example
 
