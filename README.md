@@ -5,6 +5,30 @@ This repository has tools and notes for demonstration and evaluation of
 ## Preliminaries
 Some notes on getting started
 
+### Configuration & Environment
+ * `RUCIO_HOME` must point to a directory which includes `etc/rucio.cfg`
+ * `rucio.cfg` should look like:
+ ```
+ [client]
+ rucio_host = https://rucio-ligo.grid.uchicago.edu:443
+ auth_host = https://rucio-ligo.grid.uchicago.edu:443
+ ca_cert = /etc/grid-security/certificates
+ client_x509_proxy = /tmp/x509up_p2411400.filearAiBG.1
+ request_retries = 3
+ auth_type = x509
+ client_cert = /tmp/x509up_p2411400.filearAiBG.1
+ client_key = /tmp/x509up_p2411400.filearAiBG.1
+
+ ```
+
+ where `client_cert` and `client_key` should point to the output of
+ ```
+ grid-proxy-info -path
+ ```
+
+ * Admin tasks should have `RUCIO_ACCOUNT=root`
+ * User tasks should have `RUCIO_ACCOUNT=jclark` (for example)
+
 ### Rucio Storage Element
 The first thing we need is an
 [RSE](http://tbeerman-rucio.readthedocs.io/en/latest/overview_Rucio_Storage_Element.html)
