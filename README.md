@@ -47,7 +47,9 @@ rucio -v upload \
     --rse LIGOTEST --scope ER8 \
     --name H-H1_HOFT_C02-1126256640-4096.gwf
 ```
+
 Should generate something like,
+
 ```
 2018-02-05 13:33:31,104    DEBUG    Extracting filesize (457680774) and checksum
 (ef00cf51) for file ER8:H-H1_HOFT_C02-1126256640-4096
@@ -69,7 +71,7 @@ Completed in 34.7796 sec.
 ```
 
 
-### Python Example
+## Python Example
 
 A next step is to set up a python simple script to:
  * Retrieve a list of frame files which corresponds to some nominal data set
