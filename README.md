@@ -59,7 +59,7 @@ ER8:H-H1_HOFT_C02-1126256640-4096 for upload
 2018-02-05 13:33:39,285    INFO    Local files and file
 ER8:H-H1_HOFT_C02-1126256640-4096 recorded in Rucio have the same checksum. Will
 try the upload
-2018-02-05 13:33:56,808    INFO    File ER8:H-H1_HOFT_C02-1126256640-4096
+2018-02-05 13:33:56,808    INFO    File ER8:H-H1_HOFT_C02-1126256640-4096.gwf
 successfully uploaded on the storage
 2018-02-05 13:33:56,809    DEBUG    sending trace
 2018-02-05 13:33:57,270    DEBUG    Finished uploading files to RSE.
