@@ -225,14 +225,14 @@ def main():
 
 
     # XXX Testing area: tinker here then move to methods in DatasetInjector
-    replica_client = ReplicaClient()
+    #replica_client = ReplicaClient()
     
     #
     # 1. Create the list of files to replicate
     #
     # --- This list is in dataset.replicas
     print "adding replicas to RSE"
-    replica_client.add_replicas(rse=ap.rse, files=dataset.replicas)
+    #replica_client.add_replicas(rse=ap.rse, files=dataset.replicas)
 
     #
     # 2. Register this list of replicas with a dataset

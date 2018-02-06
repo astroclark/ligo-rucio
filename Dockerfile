@@ -20,9 +20,11 @@ RUN yum install -y \
 # PyCBC
 RUN pip install --upgrade setuptools pip git+https://github.com/ligo-cbc/pycbc  
 
-RUN groupadd -r ligo-rucio && useradd --no-log-init -r -g ligo-rucio ligo-rucio
-USER ligo-rucio
+#RUN groupadd -r ligo-rucio && useradd --no-log-init -r -g ligo-rucio ligo-rucio
+#USER ligo-rucio
 WORKDIR /home/ligo-rucio
+
+USER $USER
 
 ENTRYPOINT ["/bin/bash"]
 
