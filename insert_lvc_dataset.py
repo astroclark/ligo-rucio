@@ -189,7 +189,10 @@ class DatasetInjector(object):
 
         self.replicas = []
         for frame in frames:
-            name = os.path.basename(frame)
+
+            base_name = os.path.basename(frame)
+            name = base_name
+            directory = os.path.dirname(frame)
 
             size, checksum = self.check_storage("file://"+frame)
 
@@ -200,10 +203,11 @@ class DatasetInjector(object):
             for scope in DATA_RUNS:
                 if DATA_RUNS[scope][0] <= start <= DATA_RUNS[scope][1]:
                     replica = {'scope':scope,
+                            'filename':base_name,
                             'name':name,
-                            'bytes':size,
-                            'adler32':checksum,
-                            'pfn':url}
+                            'filesize':size,
+                            'adler32':checksum}
+#                            'pfn':url}
                     self.replicas.append(replica)
                     break
             else:
@@ -220,7 +224,6 @@ class DatasetInjector(object):
     #                              source_dir=directory,
     #                              force_pfn=args.pfn)
     # 
-
 
     def get_global_url(self):
         """
@@ -279,7 +282,6 @@ def main():
     # Find and create a data set
     dataset = DatasetInjector(ap.gps_start_time, ap.gps_end_time, ap.frame_type,
             rse=ap.rse, verbose=ap.verbose)
-
 
     print dataset.replicas
 
