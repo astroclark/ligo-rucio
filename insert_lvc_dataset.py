@@ -262,7 +262,7 @@ def main():
             verbose=ap.verbose)
 
 
-    #replica_client = ReplicaClient()
+    # XXX Testing area: tinker here then move to methods in DatasetInjector
     
     #
     # 1. Create the list of files to replicate
@@ -270,6 +270,7 @@ def main():
     # --- This list is in dataset.replicas
     if ap.verbose:
         print "adding replicas to RSE"
+
     #replica_client.add_replicas(rse=ap.rse, files=dataset.replicas)
 
     #
