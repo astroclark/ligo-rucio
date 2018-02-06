@@ -144,6 +144,8 @@ class DatasetInjector(object):
         self.lifetime = lifetime
         self.dry_run = dry_run
 
+        self.get_global_url()
+
         self.gfal = Gfal2Context()
 
         # Locate frames
@@ -188,9 +190,10 @@ class DatasetInjector(object):
         self.replicas = []
         for frame in frames:
             name = os.path.basename(frame)
-            url = "file://"+frame
 
-            size, checksum = self.check_storage(url)
+            size, checksum = self.check_storage("file://"+frame)
+
+            url = self.url + '/' + name
 
             # Identify data run (scope)
             start = int(name.split('-')[2])
@@ -208,21 +211,58 @@ class DatasetInjector(object):
                         " scope=AW".format(frame=name))
                 warnings.warn(warnstr, Warning)
 
+    # f['upstate'] = rsemgr.upload(rse_settings=rse_settings,
+    #                              lfns=[{'filename': f['filename'],
+    #                                     'name': f['name'],
+    #                                     'scope': f['scope'],
+    #                                     'adler32': f['adler32'],
+    #                                     'filesize': f['bytes']}],
+    #                              source_dir=directory,
+    #                              force_pfn=args.pfn)
+    # 
 
-    def check_storage(self, url):
+
+    def get_global_url(self):
+        """
+        Return the base path of the rucio url
+        """
+        # FIXME: this should probably interface with the LIGO lfn2pfn algorithm 
+        if self.verbose:
+            print("Getting parameters for rse %s" % self.rse)
+
+        rse_settings = rsemgr.get_rse_info(self.rse)
+        protocol = rse_settings['protocols'][0]
+
+        schema=protocol['scheme']
+        prefix=protocol['prefix']
+        port=protocol['port'] 
+        hostname=protocol['hostname']
+
+        if schema == 'srm':
+            prefix = protocol['extended_attributes']['web_service_path'] + prefix
+        url = schema + '://' + hostname
+        if port != 0:
+            url = url + ':' + str(port)
+        self.url = url + prefix 
+
+        if self.verbose:
+            print("Determined base url %s" % self.url)
+
+
+    def check_storage(self, filepath):
         """
         Check size and checksum of a file on storage
         """
         if self.verbose:
-            print("checking url %s" % url)
+            print("Checking url %s" % filepath)
         try:
-            size = self.gfal.stat(str(url)).st_size
-            checksum = self.gfal.checksum(str(url), 'adler32')
+            size = self.gfal.stat(str(filepath)).st_size
+            checksum = self.gfal.checksum(str(filepath), 'adler32')
             if self.verbose:
-                print("got size and checksum of file: pfn=%s size=%s checksum=%s"
-                      % (url, size, checksum))
+                print("Got size and checksum of file: %s size=%s checksum=%s"
+                      % (filepath, size, checksum))
         except GError:
-            print("no file found at %s" % url)
+            print("no file found at %s" % filepath)
             return False
         return size, checksum
 
@@ -235,31 +275,13 @@ def main():
     ap = parse_cmdline()
 
     # XXX Testing area: tinker here then move to methods in DatasetInjector
-    if ap.verbose:
-        print "Finding RSE info:"
-    rse_settings = rse_settingsmgr.get_rse_info(ap.rse)
-    protocol = rse_settings['protocols'][0]
-
-    schema=protocol['scheme']
-    prefix=protocol['prefix']
-#    prefix = proto['prefix'] + '/' + options.scope.replace('.', '/')
-    port=protocol['port'] 
-    hostname=protocol['hostname']
-
-    if schema == 'srm':
-        prefix = protocol['extended_attributes']['web_service_path'] + prefix
-    url = schema + '://' + hostname
-    if port != 0:
-        url = url + ':' + str(port)
-    url = url + prefix + '/' + "BLAH"
-
-    print url
-
-    sys.exit()
 
     # Find and create a data set
     dataset = DatasetInjector(ap.gps_start_time, ap.gps_end_time, ap.frame_type,
-            verbose=ap.verbose)
+            rse=ap.rse, verbose=ap.verbose)
+
+
+    print dataset.replicas
 
 
     # XXX Testing area: tinker here then move to methods in DatasetInjector
