@@ -84,9 +84,12 @@ def parse_cmdline():
     parser.add_argument("--rse", type=str, default=None, required=True,
             help="""Rucio storage element to host frames""")
 
+    parser.add_argument("--dry-run", default=False, action="store_true",
+            help="""Find frames, construct replica list but don't actually
+            upload to rucio""") 
+
     parser.add_argument("--verbose", default=False, action="store_true",
-            help="""Instead of a progress bar, Print distances & SNRs to
-            stdout""")
+            help="""Print extra info""")
 
     parser.add_argument("--gps-start-time", metavar="GPSSTART", type=int,
             help="GPS start time of segment (e.g., 1126259457)",
@@ -125,11 +128,12 @@ class DatasetInjector(object):
     """
 
     def __init__(self, start_time, end_time, frtype, site=None, rse=None,
-            check=True, lifetime=None, dry_run=False):
+            check=True, lifetime=None, dry_run=False, verbose=False):
 
         self.start_time = start_time
         self.end_time = end_time
         self.frtype = frtype
+        self.verbose = verbose
 
         self.site = site
 
@@ -155,15 +159,24 @@ class DatasetInjector(object):
         """
 
         # Datafind query
-        print "Querying datafind server:"
-        print "Type: ", self.frtype
-        print "Interval: ({0},{1}]".format(self.start_time, self.end_time)
+        if self.verbose:
+            print "-------------------------"
+            print "Querying datafind server:"
+            print "Type: ", self.frtype
+            print "Interval: [{0},{1})".format(self.start_time, self.end_time)
 
         frames = frame_paths(self.frtype, self.start_time, self.end_time,
                 url_type='file', server=LIGO_DATAFIND_SERVER)
 
         if not hasattr(frames,"__iter__"):
             frames = [self.frames]
+
+        if self.verbose:
+            print "Query returned {0} frames in [{1},{2})".format(
+                    len(frames), self.start_time, self.end_time)
+            print "First frame: {}".format(frames[0])
+            print "Last frame: {}".format(frames[-1])
+            print "-------------------------"
 
         return frames
 
@@ -200,12 +213,14 @@ class DatasetInjector(object):
         """
         Check size and checksum of a file on storage
         """
-        print("checking url %s" % url)
+        if self.verbose:
+            print("checking url %s" % url)
         try:
             size = self.gfal.stat(str(url)).st_size
             checksum = self.gfal.checksum(str(url), 'adler32')
-            print("got size and checksum of file: pfn=%s size=%s checksum=%s"
-                  % (url, size, checksum))
+            if self.verbose:
+                print("got size and checksum of file: pfn=%s size=%s checksum=%s"
+                      % (url, size, checksum))
         except GError:
             print("no file found at %s" % url)
             return False
@@ -219,20 +234,43 @@ def main():
     # Parse input
     ap = parse_cmdline()
 
-    dataset = DatasetInjector(ap.gps_start_time, ap.gps_end_time, ap.frame_type)
-    print "Rucio replicas:"
-    print dataset.replicas
-
-
     # XXX Testing area: tinker here then move to methods in DatasetInjector
-    replica_client = ReplicaClient()
+    if ap.verbose:
+        print "Finding RSE info:"
+    rse_settings = rse_settingsmgr.get_rse_info(ap.rse)
+    protocol = rse_settings['protocols'][0]
+
+    schema=protocol['scheme']
+    prefix=protocol['prefix']
+#    prefix = proto['prefix'] + '/' + options.scope.replace('.', '/')
+    port=protocol['port'] 
+    hostname=protocol['hostname']
+
+    if schema == 'srm':
+        prefix = protocol['extended_attributes']['web_service_path'] + prefix
+    url = schema + '://' + hostname
+    if port != 0:
+        url = url + ':' + str(port)
+    url = url + prefix + '/' + "BLAH"
+
+    print url
+
+    sys.exit()
+
+    # Find and create a data set
+    dataset = DatasetInjector(ap.gps_start_time, ap.gps_end_time, ap.frame_type,
+            verbose=ap.verbose)
+
+
+    #replica_client = ReplicaClient()
     
     #
     # 1. Create the list of files to replicate
     #
     # --- This list is in dataset.replicas
-    print "adding replicas to RSE"
-    replica_client.add_replicas(rse=ap.rse, files=dataset.replicas)
+    if ap.verbose:
+        print "adding replicas to RSE"
+    #replica_client.add_replicas(rse=ap.rse, files=dataset.replicas)
 
     #
     # 2. Register this list of replicas with a dataset
