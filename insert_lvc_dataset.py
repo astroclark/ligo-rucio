@@ -31,12 +31,11 @@ import os,sys
 import warnings
 import argparse
 from pycbc.frame import frame_paths
-#   import rucio.rse.rsemanager as rsemgr
 from rucio.client.didclient import DIDClient
 from rucio.client.replicaclient import ReplicaClient
-#   from rucio.common.exception import DataIdentifierAlreadyExists
-#   from rucio.common.exception import RucioException
-#   from rucio.common.exception import FileAlreadyExists
+from rucio.common.exception import DataIdentifierAlreadyExists
+from rucio.common.exception import RucioException
+from rucio.common.exception import FileAlreadyExists
 
 from gfal2 import Gfal2Context, GError
 from rucio.client.replicaclient import ReplicaClient
@@ -171,6 +170,7 @@ class DatasetInjector(object):
         # Initialization for dataset
         self.get_global_url()
         self.did_client = DIDClient()
+        self.rep_client = ReplicaClient()
 
         self.gfal = Gfal2Context()
 
@@ -179,7 +179,7 @@ class DatasetInjector(object):
 
         # Create rucio names -- this should probably come from the lfn2pfn
         # algorithm, not me
-        self.frames2rucio(frames)
+        self.list_replicas(frames)
 
 
     def find_frames(self):
@@ -211,9 +211,19 @@ class DatasetInjector(object):
 
         return frames
 
-    def frames2rucio(self, frames):
+    def list_replicas(self, frames):
         """
-        Determine the Rucio DIDs for given frame URLs and add to a list of dictionaries
+        Construct a list of file replicas with the following properties:
+
+        :param rse: the RSE name.
+        :param scope: The scope of the file.
+        :param name: The name of the file.
+        :param bytes: The size in bytes.
+        :param adler32: adler32 checksum.
+        :param pfn: PFN of the file for non deterministic RSE.
+        :param md5: md5 checksum.
+        :param meta: Metadata attributes.
+
         """
 
         self.replicas = []
@@ -227,13 +237,17 @@ class DatasetInjector(object):
 
             url = self.url + '/' + name
 
-            replica = {'scope':self.scope,
-                    'filename':base_name,
+            replica = {
+                    'rse':self.rse,
+                    'scope':self.scope,
                     'name':name,
-                    'filesize':size,
+                    'bytes':size,
+                    'filename':base_name,
                     'adler32':checksum}
 #                            'pfn':url}
             self.replicas.append(replica)
+
+
 
     def get_global_url(self):
         """
@@ -296,40 +310,69 @@ def main():
             scope=ap.scope, rse=ap.rse, lifetime=ap.lifetime,
             verbose=ap.verbose)
 
-    print "Files for dataset:"
-    print dataset.replicas
-
 
     # XXX Testing area: tinker here then move to methods in DatasetInjector
+
+    # Recipe:
+    #   a) create and register a dataset in the RSE
+    #   b) register file replicas with the RSE
+    #   c) attach files to the dataset
     
     #
     # 2. Create and register the dataset object
     #
+    try:
+        dataset.did_client.add_dataset(scope=dataset.scope,
+                name=dataset.dataset_name, lifetime=dataset.lifetime,
+                rse=dataset.rse)
+        if ap.verbose:
+            print("Creating dataset {}".format(dataset.dataset_name))
+    except DataIdentifierAlreadyExists:
+        if ap.verbose:
+            print("Dataset {} already exists".format(dataset.dataset_name))
+
+
+    #
+    # 3. Register files for replication
+    #
+
+    # XXX: find the code i used to upload that 1 frame
     if ap.verbose:
-        print "Creating dataset {}".format(dataset.dataset_name)
+        print("Registering file replicas")
+    for replica in dataset.replicas:
 
-    print dataset.scope
-    print dataset.dataset_name
+        if ap.verbose:
+            print("------")
+            print("registering {}".format(replica['name']))
+
+        print replica['rse']
+        print replica['scope']
+        print replica['name']
+        print replica['adler32']
+        print replica['bytes']
+#        print replica['pfn']
+
+#       rep_client.add_replicas(rse=dataset.rse, files=[{
+#                       'scope': self.scope,
+#                       'name': filemd['name'],
+#                       'adler32': filemd['checksum'],
+#                       'bytes': filemd['size'],
+#                       'pfn': self.get_file_url(filemd['name'])
+#                   }])
 
 
-    dataset.did_client.add_dataset(scope=dataset.scope,
-            name=dataset.dataset_name, lifetime=dataset.lifetime,
-            rse=dataset.rse)
+    #
+    # 4. Attach replicas to the dataset
+    #
+
+#       dataset.did_client.attach_dids(scope=dataset.scope,
+#               name=dataset.dataset_name, 
+#               dids=[{'scope': dataset.scope, 'name': lfn}])
+#
 
     #
     # 3. Attach files to dataset
     #
-    if ap.verbose:
-        print "Attaching files"
-    for filemd in dataset.replicas:
-        print filemd['name']
-    sys.exit()
-    dataset.did_client.attach_dids(scope=dataset.scope,
-            name=dataset.dataset_name, 
-            dids=[{'scope': dataset.scope, 'name': lfn}])
-
-    # why not didc.add_files_to_dataset() ??
-
 
 
 if __name__ == "__main__":
