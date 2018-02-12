@@ -32,8 +32,8 @@ import warnings
 import argparse
 from pycbc.frame import frame_paths
 #   import rucio.rse.rsemanager as rsemgr
-#   from rucio.client.didclient import DIDClient
-#   from rucio.client.replicaclient import ReplicaClient
+from rucio.client.didclient import DIDClient
+from rucio.client.replicaclient import ReplicaClient
 #   from rucio.common.exception import DataIdentifierAlreadyExists
 #   from rucio.common.exception import RucioException
 #   from rucio.common.exception import FileAlreadyExists
@@ -42,44 +42,13 @@ from gfal2 import Gfal2Context, GError
 from rucio.client.replicaclient import ReplicaClient
 import rucio.rse.rsemanager as rsemgr
 
-# FIXME: These times are non-exhaustive and inexact
-DATA_RUNS={
-        'ER8':(1123858817,1126623617),
-        'O1':(1126623617,1137254417),
-        'ER9':(1152136817,1152169157),
-        'O2':(1164499217,1187654418)
-        }
-
-try:
-    LIGO_DATAFIND_SERVER=os.environ['LIGO_DATAFIND_SERVER']
-except:
-    LIGO_DATAFIND_SERVER="datafind.ligo.org:443"
-
-#   def rucio2ligo(dids):
-#       """
-#       Construct the expected path to frames, given a Rucio DID
-#
-#       Path should be <run>/<type>/<ifo>/<site>-<type>-<day>
-#
-#       E.g., ER8/H1_HOFT_C00/H1/H-H1_HOFT_C00-1126
-#       """
-#
-#       if not hasattr(dids,"__iter__"):
-#           dids = [dids]
-#
-#       frame_pfns = []
-#       for did in dids:
-#           run=did.split(":")[0]
-#           name=did.split(":")[1]
-#           ftype=name.split("-")[1]
-#           ifo=ftype[0]
-#           day=name.split('-')[2][:4]
-#           frame_pfns.append(os.path.join(frame_path,run,ftype,ifo,day,name))
-#       return frame_pfns
 
 def parse_cmdline():
 
     parser = argparse.ArgumentParser(description=__doc__)
+
+    parser.add_argument("--dataset_name", type=str, default=None, required=True,
+            help="""Dataset name""")
 
     parser.add_argument("--rse", type=str, default=None, required=True,
             help="""Rucio storage element to host frames""")
@@ -90,6 +59,13 @@ def parse_cmdline():
 
     parser.add_argument("--verbose", default=False, action="store_true",
             help="""Print extra info""")
+
+    parser.add_argument("--scope", type=str, default=None, required=False,
+            help="""Scope of the dataset (default: data run corresponding to
+            requested times""")
+
+    parser.add_argument("--lifetime", type=float, default=100, required=False,
+            help="""Dataset lifetime in seconds (default=100 for testing)""")
 
     parser.add_argument("--gps-start-time", metavar="GPSSTART", type=int,
             help="GPS start time of segment (e.g., 1126259457)",
@@ -111,10 +87,38 @@ def parse_cmdline():
             required='--open-data' not in sys.argv, help="""frame type (e.g.,
             H1_HOFT_C02. See e.g., https://dcc.ligo.org/LIGO-T010150/public)""")
 
-    #parser.add_argument('--version', action='version', version=__version__)
+    parser.add_argument("--datafind-server", type=str, default=None,
+            required=False, help="""datafind server to find frames on.  Use
+            datafind.ligo.org:443 for /cvmfs frames (defaults to whatever is in
+            ${LIGO_DATAFIND_SERVER})""")
+
     ap = parser.parse_args()
 
     return ap
+
+def get_scope(start_time, end_time):
+    """
+    Determine scope for given GPS times
+    """
+
+    # FIXME: These times are non-exhaustive and inexact/unverified
+    DATA_RUNS={
+            'ER8':(1123858817,1126623617),
+            'O1':(1126623617,1137254417),
+            'ER9':(1152136817,1152169157),
+            'O2':(1164499217,1187654418)
+            }
+
+    # FIXME: What if times span multiple runs?? 
+    for scope in DATA_RUNS:
+        if DATA_RUNS[scope][0] <= start_time <= DATA_RUNS[scope][1]:
+            return scope
+    else:
+        warnstr=("Requested time ({}) not in known data-gathering run. Setting"
+                " scope=AW (astrowatch)".format(start_time))
+        warnings.warn(warnstr, Warning)
+        return "AW"
+
 
 
 class DatasetInjector(object):
@@ -127,13 +131,33 @@ class DatasetInjector(object):
     4) Register Rucio dataset
     """
 
-    def __init__(self, start_time, end_time, frtype, site=None, rse=None,
-            check=True, lifetime=None, dry_run=False, verbose=False):
+    def __init__(self, dataset_name, start_time, end_time, frtype,
+            datafind_server=None, scope=None, site=None, rse=None, check=True,
+            lifetime=None, dry_run=False, verbose=False):
 
+        if datafind_server is None:
+            # If undefined, use default from environment
+            try:
+                self.LIGO_DATAFIND_SERVER=os.environ['LIGO_DATAFIND_SERVER']
+                # If no datafind server in env, use cvmfs server
+            except:
+                self.LIGO_DATAFIND_SERVER="datafind.ligo.org:443"
+        else:
+            self.LIGO_DATAFIND_SERVER=datafind_server
+
+        self.dataset_name = dataset_name
         self.start_time = start_time
         self.end_time = end_time
         self.frtype = frtype
         self.verbose = verbose
+
+
+        if self.verbose: print "Attempting to determine scope from GPS time"
+        if scope is None:
+            self.scope = get_scope(start_time, end_time)
+        else:
+            self.scope=scope
+        if self.verbose: print "Scope: {}".format(self.scope)
 
         self.site = site
 
@@ -144,15 +168,19 @@ class DatasetInjector(object):
         self.lifetime = lifetime
         self.dry_run = dry_run
 
+        # Initialization for dataset
         self.get_global_url()
+        self.did_client = DIDClient()
 
         self.gfal = Gfal2Context()
 
         # Locate frames
         frames = self.find_frames()
 
-        # Create rucio names
+        # Create rucio names -- this should probably come from the lfn2pfn
+        # algorithm, not me
         self.frames2rucio(frames)
+
 
     def find_frames(self):
         """
@@ -163,12 +191,13 @@ class DatasetInjector(object):
         # Datafind query
         if self.verbose:
             print "-------------------------"
-            print "Querying datafind server:"
+            print "Querying datafind server:{}".format(
+                    self.LIGO_DATAFIND_SERVER)
             print "Type: ", self.frtype
             print "Interval: [{0},{1})".format(self.start_time, self.end_time)
 
         frames = frame_paths(self.frtype, self.start_time, self.end_time,
-                url_type='file', server=LIGO_DATAFIND_SERVER)
+                url_type='file', server=self.LIGO_DATAFIND_SERVER)
 
         if not hasattr(frames,"__iter__"):
             frames = [self.frames]
@@ -198,32 +227,13 @@ class DatasetInjector(object):
 
             url = self.url + '/' + name
 
-            # Identify data run (scope)
-            start = int(name.split('-')[2])
-            for scope in DATA_RUNS:
-                if DATA_RUNS[scope][0] <= start <= DATA_RUNS[scope][1]:
-                    replica = {'scope':scope,
-                            'filename':base_name,
-                            'name':name,
-                            'filesize':size,
-                            'adler32':checksum}
+            replica = {'scope':self.scope,
+                    'filename':base_name,
+                    'name':name,
+                    'filesize':size,
+                    'adler32':checksum}
 #                            'pfn':url}
-                    self.replicas.append(replica)
-                    break
-            else:
-                warnstr=("Frame {frame} not in known data-gathering run. Setting"
-                        " scope=AW".format(frame=name))
-                warnings.warn(warnstr, Warning)
-
-    # f['upstate'] = rsemgr.upload(rse_settings=rse_settings,
-    #                              lfns=[{'filename': f['filename'],
-    #                                     'name': f['name'],
-    #                                     'scope': f['scope'],
-    #                                     'adler32': f['adler32'],
-    #                                     'filesize': f['bytes']}],
-    #                              source_dir=directory,
-    #                              force_pfn=args.pfn)
-    # 
+            self.replicas.append(replica)
 
     def get_global_url(self):
         """
@@ -277,37 +287,49 @@ def main():
     # Parse input
     ap = parse_cmdline()
 
-    # XXX Testing area: tinker here then move to methods in DatasetInjector
+    #
+    # 1. Create the list of files to replicate
+    #
+    dataset = DatasetInjector(ap.dataset_name, 
+            ap.gps_start_time, ap.gps_end_time, ap.frame_type, 
+            datafind_server=ap.datafind_server,
+            scope=ap.scope, rse=ap.rse, lifetime=ap.lifetime,
+            verbose=ap.verbose)
 
-    # Find and create a data set
-    dataset = DatasetInjector(ap.gps_start_time, ap.gps_end_time, ap.frame_type,
-            rse=ap.rse, verbose=ap.verbose)
-
+    print "Files for dataset:"
     print dataset.replicas
 
 
     # XXX Testing area: tinker here then move to methods in DatasetInjector
     
     #
-    # 1. Create the list of files to replicate
+    # 2. Create and register the dataset object
     #
-    # --- This list is in dataset.replicas
     if ap.verbose:
-        print "adding replicas to RSE"
+        print "Creating dataset {}".format(dataset.dataset_name)
 
-    #replica_client.add_replicas(rse=ap.rse, files=dataset.replicas)
+    print dataset.scope
+    print dataset.dataset_name
+
+
+    dataset.did_client.add_dataset(scope=dataset.scope,
+            name=dataset.dataset_name, lifetime=dataset.lifetime,
+            rse=dataset.rse)
 
     #
-    # 2. Register this list of replicas with a dataset
+    # 3. Attach files to dataset
     #
-    
-    # -- We just need to attach each file to the dataset
-    #
-    # See e.g., attach_file in register() in cmsexample.py:
+    if ap.verbose:
+        print "Attaching files"
+    for filemd in dataset.replicas:
+        print filemd['name']
+    sys.exit()
+    dataset.did_client.attach_dids(scope=dataset.scope,
+            name=dataset.dataset_name, 
+            dids=[{'scope': dataset.scope, 'name': lfn}])
 
-    # for filemd in block['files']:
-    #     self.register_replica(filemd)
-    #     self.attach_file(filemd['name'], block['name'])
+    # why not didc.add_files_to_dataset() ??
+
 
 
 if __name__ == "__main__":
