@@ -151,12 +151,12 @@ class DatasetInjector(object):
         self.verbose = verbose
 
 
-        if self.verbose: print "Attempting to determine scope from GPS time"
+        print("Attempting to determine scope from GPS time")
         if scope is None:
             self.scope = get_scope(start_time, end_time)
         else:
             self.scope=scope
-        if self.verbose: print "Scope: {}".format(self.scope)
+        print("Scope: {}".format(self.scope))
 
         self.site = site
 
@@ -179,7 +179,7 @@ class DatasetInjector(object):
 
         # Create rucio names -- this should probably come from the lfn2pfn
         # algorithm, not me
-        self.list_replicas(frames)
+        self.list_files(frames)
 
 
     def find_frames(self):
@@ -189,12 +189,11 @@ class DatasetInjector(object):
         """
 
         # Datafind query
-        if self.verbose:
-            print "-------------------------"
-            print "Querying datafind server:{}".format(
-                    self.LIGO_DATAFIND_SERVER)
-            print "Type: ", self.frtype
-            print "Interval: [{0},{1})".format(self.start_time, self.end_time)
+        print "-------------------------"
+        print "Querying datafind server:{}".format(
+                self.LIGO_DATAFIND_SERVER)
+        print "Type: ", self.frtype
+        print "Interval: [{0},{1})\n".format(self.start_time, self.end_time)
 
         frames = frame_paths(self.frtype, self.start_time, self.end_time,
                 url_type='file', server=self.LIGO_DATAFIND_SERVER)
@@ -202,18 +201,16 @@ class DatasetInjector(object):
         if not hasattr(frames,"__iter__"):
             frames = [self.frames]
 
-        if self.verbose:
-            print "Query returned {0} frames in [{1},{2})".format(
-                    len(frames), self.start_time, self.end_time)
-            print "First frame: {}".format(frames[0])
-            print "Last frame: {}".format(frames[-1])
-            print "-------------------------"
+        print "Query returned {0} frames in [{1},{2})".format(
+                len(frames), self.start_time, self.end_time)
+        print "First frame: {}".format(frames[0])
+        print "Last frame: {}".format(frames[-1])
 
         return frames
 
-    def list_replicas(self, frames):
+    def list_files(self, frames):
         """
-        Construct a list of file replicas with the following properties:
+        Construct a list of files with the following dictionary keys:
 
         :param rse: the RSE name.
         :param scope: The scope of the file.
@@ -226,7 +223,7 @@ class DatasetInjector(object):
 
         """
 
-        self.replicas = []
+        self.files = []
         for frame in frames:
 
             base_name = os.path.basename(frame)
@@ -234,28 +231,31 @@ class DatasetInjector(object):
             directory = os.path.dirname(frame)
 
             size, checksum = self.check_storage("file://"+frame)
+            url = self.get_file_url(name)
 
-            url = self.url + '/' + name
-
-            replica = {
+            filemd = {
                     'rse':self.rse,
                     'scope':self.scope,
                     'name':name,
                     'bytes':size,
                     'filename':base_name,
-                    'adler32':checksum}
-#                            'pfn':url}
-            self.replicas.append(replica)
+                    'adler32':checksum}#,
+                    #'pfn':url}
+            self.files.append(filemd)
 
 
+    def get_file_url(self, lfn):
+        """
+        Return the rucio url of a file.
+        """
+        return self.url + '/' + lfn
 
     def get_global_url(self):
         """
         Return the base path of the rucio url
         """
-        # FIXME: this should probably interface with the LIGO lfn2pfn algorithm 
-        if self.verbose:
-            print("Getting parameters for rse %s" % self.rse)
+
+        print("Getting parameters for rse %s" % self.rse)
 
         rse_settings = rsemgr.get_rse_info(self.rse)
         protocol = rse_settings['protocols'][0]
@@ -272,22 +272,19 @@ class DatasetInjector(object):
             url = url + ':' + str(port)
         self.url = url + prefix 
 
-        if self.verbose:
-            print("Determined base url %s" % self.url)
+        print("Determined base url %s" % self.url)
 
 
     def check_storage(self, filepath):
         """
         Check size and checksum of a file on storage
         """
-        if self.verbose:
-            print("Checking url %s" % filepath)
+        print("Checking url %s" % filepath)
         try:
             size = self.gfal.stat(str(filepath)).st_size
             checksum = self.gfal.checksum(str(filepath), 'adler32')
-            if self.verbose:
-                print("Got size and checksum of file: %s size=%s checksum=%s"
-                      % (filepath, size, checksum))
+            print("Got size and checksum of file: %s size=%s checksum=%s"
+                    % (filepath, size, checksum))
         except GError:
             print("no file found at %s" % filepath)
             return False
@@ -310,8 +307,7 @@ def main():
             scope=ap.scope, rse=ap.rse, lifetime=ap.lifetime,
             verbose=ap.verbose)
 
-
-    # XXX Testing area: tinker here then move to methods in DatasetInjector
+    # XXX Playground: tinker here then move to methods in DatasetInjector
 
     # Recipe:
     #   a) create and register a dataset in the RSE
@@ -322,56 +318,80 @@ def main():
     # 2. Create and register the dataset object
     #
     try:
+        print "-------------------------"
+        print("Registering dataset {}\n".format(dataset.dataset_name))
         dataset.did_client.add_dataset(scope=dataset.scope,
                 name=dataset.dataset_name, lifetime=dataset.lifetime,
                 rse=dataset.rse)
-        if ap.verbose:
-            print("Creating dataset {}".format(dataset.dataset_name))
     except DataIdentifierAlreadyExists:
-        if ap.verbose:
-            print("Dataset {} already exists".format(dataset.dataset_name))
+        print("Dataset {} already exists".format(dataset.dataset_name))
+
+    try:
+        print("attaching dataset {}".format(dataset.dataset_name))
+        dataset.did_client.attach_dids(scope=dataset.scope,
+                name=dataset.dataset_name, dids=[{'scope': dataset.scope,
+                    'name': dataset.dataset_name}])
+    except RucioException:
+        print(" Dataset already attached")
 
 
     #
     # 3. Register files for replication
     #
+    print "-------------------------"
+    print("Registering file replicas\n")
 
-    # XXX: find the code i used to upload that 1 frame
-    if ap.verbose:
-        print("Registering file replicas")
-    for replica in dataset.replicas:
+    for filemd in dataset.files:
 
-        if ap.verbose:
-            print("------")
-            print("registering {}".format(replica['name']))
+        print("Registering {}".format(filemd['name']))
 
-        print replica['rse']
-        print replica['scope']
-        print replica['name']
-        print replica['adler32']
-        print replica['bytes']
-#        print replica['pfn']
+        # --- Check if a replica of the given file at the site already exists.
+        print("checking if file %s with scope %s has already a replica at %s"
+              % (filemd['name'], filemd['scope'], dataset.rse))
 
-#       rep_client.add_replicas(rse=dataset.rse, files=[{
-#                       'scope': self.scope,
-#                       'name': filemd['name'],
-#                       'adler32': filemd['checksum'],
-#                       'bytes': filemd['size'],
-#                       'pfn': self.get_file_url(filemd['name'])
-#                   }])
+        existing_replicas = list(dataset.rep_client.list_replicas([{'scope':
+            filemd['scope'], 'name': filemd['name']}]))
+
+        if existing_replicas:
+            existing_replicas = existing_replicas[0]
+            if 'rses' in existing_replicas:
+                if dataset.rse in existing_replicas['rses']:
+                    print("File %s with scope %s has already a replica at %s"
+                          % (filemd['name'], dataset.scope, dataset.rse))
+        else:
+            # Register replica
+            if dataset.rep_client.add_replicas(rse=dataset.rse, 
+                    files=[{
+                        'scope': dataset.scope,
+                        'name': filemd['name'],
+                        'adler32': filemd['adler32'],
+                        'bytes': filemd['bytes']}]):
+
+                        # PFN is determined on its own
+                        #'pfn': replica['pfn']}]):
+
+                print("File {} registered".format(filemd['name']))
+            else:
+                print("File {} registration failed".format(filemd['name']))
+
+        # End check
+
+        #
+        # 4. Attach replicas to the dataset
+        #
+        try:
+            print("Attaching file {0} to datset {1}".format(filemd['name'],
+                dataset.dataset_name))
+            dataset.did_client.attach_dids(scope=dataset.scope,
+                    name=dataset.dataset_name, 
+                    dids=[{'scope': dataset.scope, 'name': filemd['name']}])
+
+        except FileAlreadyExists:
+            print("File already exists")
 
 
     #
-    # 4. Attach replicas to the dataset
-    #
-
-#       dataset.did_client.attach_dids(scope=dataset.scope,
-#               name=dataset.dataset_name, 
-#               dids=[{'scope': dataset.scope, 'name': lfn}])
-#
-
-    #
-    # 3. Attach files to dataset
+    # 5. Upload data
     #
 
 
