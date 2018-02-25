@@ -66,6 +66,10 @@ def parse_cmdline():
     parser.add_argument("--debug", default=False, action="store_true",
             help="""Print debug logging info""")
 
+    parser.add_argument("--log-file", type=str,
+            default=os.path.basename(__file__).replace('py','log'),
+            help="""Direct logging information to this file""")
+
     parser.add_argument("--scope", type=str, default=None, required=False,
             help="""Scope of the dataset (default: data run corresponding to
             requested times""")
@@ -321,9 +325,21 @@ def main():
     # Parse input
     ap = parse_cmdline()
 
-    root = logging.getLogger()
-    if ap.verbose: root.setLevel(logging.INFO)
-    if ap.debug: root.setLevel(logging.DEBUG)
+    #logging.getLogger().addHandler(logging.StreamHandler())
+
+    if ap.verbose: logging.basicConfig(level=logging.INFO)
+    if ap.debug: logging.basicConfig(level=logging.DEBUG)
+
+    logFormatter = logging.Formatter("%(asctime)s [%(threadName)-12.12s] [%(levelname)-5.5s]  %(message)s")
+    rootLogger = logging.getLogger()
+
+    fileHandler = logging.FileHandler(ap.log_file)
+    fileHandler.setFormatter(logFormatter)
+    rootLogger.addHandler(fileHandler)
+
+    consoleHandler = logging.StreamHandler()
+    consoleHandler.setFormatter(logFormatter)
+    rootLogger.addHandler(consoleHandler)
 
     logging.info("Aquiring rucio configuration")
 
