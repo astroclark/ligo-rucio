@@ -28,10 +28,10 @@ Rucio scope is determined by run (engineering/observing run).
 
 
 import os,sys
+import logging
 import time
 import warnings
 import multiprocessing
-from functools import partial
 import argparse
 from pycbc.frame import frame_paths
 from rucio.client.didclient import DIDClient
@@ -61,7 +61,10 @@ def parse_cmdline():
             upload to rucio""") 
 
     parser.add_argument("--verbose", default=False, action="store_true",
-            help="""Print extra info""")
+            help="""Print all logging info""")
+
+    parser.add_argument("--debug", default=False, action="store_true",
+            help="""Print debug logging info""")
 
     parser.add_argument("--scope", type=str, default=None, required=False,
             help="""Scope of the dataset (default: data run corresponding to
@@ -95,12 +98,14 @@ def parse_cmdline():
             datafind.ligo.org:443 for /cvmfs frames (defaults to whatever is in
             ${LIGO_DATAFIND_SERVER})""")
 
-    parser.add_argument("--nthreads", metavar="NTHREADS", type=int,
+    parser.add_argument("--disable-multiprocessing", default=False,
+            action="store_true", help="""Disable multiprocessing""")
+
+    parser.add_argument("--nprocs", metavar="nprocs", type=int,
             help="""Number of processes to launch to retrieve LFN
             information""", default=MAXTHREADS)
 
     ap = parser.parse_args()
-
 
     return ap
 
@@ -127,19 +132,11 @@ def get_scope(start_time, end_time):
         warnings.warn(warnstr, Warning)
         return "AW"
 
-#
-# Support functions for DatSetInjector
-#
-# These need to be outside the class so we can use multiprocessing
-#
-
 def unwrap_file_dict(arg, **kwarg):
     """
     External call to DatasetInjector method to permit multiprocessing
     """
-    return DatasetInjector._file_dict(arg, **kwarg)
-
-
+    return DatasetInjector._file_dict(*arg, **kwarg)
 
 def check_storage(filepath):
     """
@@ -148,18 +145,16 @@ def check_storage(filepath):
     # FIXME: Gfal2Context cannot be pickled so we have to instantiate here to
     # use multiprocessing()
     gfal = Gfal2Context()
-    print("Checking url %s" % filepath)
+    logging.info("Checking url %s" % filepath)
     try:
         size = gfal.stat(str(filepath)).st_size
         checksum = gfal.checksum(str(filepath), 'adler32')
-        print("Got size and checksum of file: %s size=%s checksum=%s"
+        logging.info("Got size and checksum of file: %s size=%s checksum=%s"
                 % (filepath, size, checksum))
     except GError:
-        print("no file found at %s" % filepath)
+        logging.warning("no file found at %s" % filepath)
         return False
     return size, checksum
-
-
 
 class DatasetInjector(object):
     """
@@ -173,7 +168,8 @@ class DatasetInjector(object):
 
     def __init__(self, dataset_name, start_time, end_time, frtype,
             datafind_server=None, scope=None, site=None, rse=None, check=True,
-            lifetime=None, dry_run=False, nthreads=MAXTHREADS, verbose=False):
+            lifetime=None, dry_run=False, no_multiprocs=False,
+            nprocs=MAXTHREADS, verbose=False):
 
         if datafind_server is None:
             # If undefined, use default from environment
@@ -189,15 +185,14 @@ class DatasetInjector(object):
         self.start_time = start_time
         self.end_time = end_time
         self.frtype = frtype
-        self.verbose = verbose
+        self.no_multiprocs = no_multiprocs
 
-
-        print("Attempting to determine scope from GPS time")
+        logging.info("Attempting to determine scope from GPS time")
         if scope is None:
             self.scope = get_scope(start_time, end_time)
         else:
             self.scope=scope
-        print("Scope: {}".format(self.scope))
+        logging.info("Scope: {}".format(self.scope))
 
         self.site = site
 
@@ -213,35 +208,12 @@ class DatasetInjector(object):
         self.did_client = DIDClient()
         self.rep_client = ReplicaClient()
 
-#        self.gfal = Gfal2Context()
-
         # Locate frames
         frames = self.find_frames()
 
         # Create rucio names -- this should probably come from the lfn2pfn
         # algorithm, not me
-        self.list_files(frames, nthreads=nthreads)
-
-    def _file_dict(self, frame):
-        """
-        Create a dictionary with LFN properties
-        """
-
-        basename = os.path.basename(frame)
-        name = basename
-        directory = os.path.dirname(frame)
-
-        size, checksum = check_storage("file://"+frame)
-        url = os.path.join(global_url, basename)
-
-        return {
-                'rse':self.rse,
-                'scope':self.scope,
-                'name':name,
-                'bytes':size,
-                'filename':basename,
-                'adler32':checksum}#,
-                #'pfn':url}
+        self.list_files(frames, nprocs=nprocs)
 
 
     def find_frames(self):
@@ -251,11 +223,10 @@ class DatasetInjector(object):
         """
 
         # Datafind query
-        print "-------------------------"
-        print "Querying datafind server:{}".format(
-                self.LIGO_DATAFIND_SERVER)
-        print "Type: ", self.frtype
-        print "Interval: [{0},{1})\n".format(self.start_time, self.end_time)
+        logging.info("Querying datafind server:{}".format(self.LIGO_DATAFIND_SERVER))
+        logging.info("Type: {}".format(self.frtype))
+        logging.info("Interval: [{0},{1})".format(self.start_time,
+            self.end_time))
 
         frames = frame_paths(self.frtype, self.start_time, self.end_time,
                 url_type='file', server=self.LIGO_DATAFIND_SERVER)
@@ -263,15 +234,15 @@ class DatasetInjector(object):
         if not hasattr(frames,"__iter__"):
             frames = [self.frames]
 
-        print "Query returned {0} frames in [{1},{2})".format(
-                len(frames), self.start_time, self.end_time)
-        print "First frame: {}".format(frames[0])
-        print "Last frame: {}".format(frames[-1])
+        logging.info("Query returned {0} frames in [{1},{2})".format(
+            len(frames), self.start_time, self.end_time))
+        logging.info("First frame: {}".format(frames[0]))
+        logging.info("Last frame: {}".format(frames[-1]))
 
         return frames
 
 
-    def list_files(self, frames, nthreads):
+    def list_files(self, frames, nprocs):
         """
         Construct a list of files with the following dictionary keys:
 
@@ -285,23 +256,45 @@ class DatasetInjector(object):
         :param meta: Metadata attributes.
 
         """
+        logging.info("Constructing rucio file list")
 
-        pool = multiprocessing.Pool(processes=nthreads)
-
-        _partial_file_dict = partial(_file_dict, rse=self.rse, scope=self.scope,
-            global_url=self.global_url)
-
-        self.files = pool.map(_partial_file_dict, frames)
+        if self.no_multiprocs:
+            logging.warning("Multiprocessing disabled")
+            self.files = map(unwrap_file_dict, zip([self]*len(frames),frames))
+        else:
+            logging.info("Using multi-process pool with {} processes".format(nprocs))
+            pool = multiprocessing.Pool(processes=nprocs)
+            self.files = pool.map(unwrap_file_dict, zip([self]*len(frames),frames))
         
-        #self.files = map(lambda frame: _file_dict(frame, self.rse, self.scope,
-        #    self.gfal, self.global_url), frames)
+
+    def _file_dict(self, frame):
+        """
+        Create a dictionary with LFN properties
+        """
+
+        basename = os.path.basename(frame)
+        name = basename
+        directory = os.path.dirname(frame)
+
+        size, checksum = check_storage("file://"+frame)
+        url = os.path.join(self.global_url, basename)
+
+        return {
+                'rse':self.rse,
+                'scope':self.scope,
+                'name':name,
+                'bytes':size,
+                'filename':basename,
+                'adler32':checksum}#,
+                #'pfn':url}
+
 
     def get_global_url(self):
         """
         Return the base path of the rucio url
         """
 
-        print("Getting parameters for rse %s" % self.rse)
+        logging.info("Getting parameters for rse %s" % self.rse)
 
         rse_settings = rsemgr.get_rse_info(self.rse)
         protocol = rse_settings['protocols'][0]
@@ -318,17 +311,23 @@ class DatasetInjector(object):
             url = url + ':' + str(port)
         self.global_url = url + prefix 
 
-        print("Determined base url %s" % self.global_url)
+        logging.info("Determined base url %s" % self.global_url)
 
 
 #########################################################################
 
-#def main():
-if __name__ == "__main__":
+def main():
 
     # Parse input
     ap = parse_cmdline()
 
+    root = logging.getLogger()
+    if ap.verbose: root.setLevel(logging.INFO)
+    if ap.debug: root.setLevel(logging.DEBUG)
+
+    logging.info("Aquiring rucio configuration")
+
+    global_start=time.time()
     #
     # 1. Create the list of files to replicate
     #
@@ -337,14 +336,11 @@ if __name__ == "__main__":
             ap.gps_start_time, ap.gps_end_time, ap.frame_type, 
             datafind_server=ap.datafind_server,
             scope=ap.scope, rse=ap.rse, lifetime=ap.lifetime,
+            no_multiprocs=ap.disable_multiprocessing,
             verbose=ap.verbose)
 
-    print("------------------------------------")
-    print("Data set identification/verification took {:.2} mins".format(
-        (time.time()-start_time)/60.0 ))
-    sys.exit()
-
-    # XXX Playground: tinker here then move to methods in DatasetInjector
+    logging.info("File identification/verification took {:.2} mins".format(
+        (time.time()-start_time)/60.))
 
     # Recipe:
     #   a) create and register a dataset in the RSE
@@ -354,36 +350,39 @@ if __name__ == "__main__":
     #
     # 2. Create and register the dataset object
     #
+    start_time=time.time()
     try:
-        print "-------------------------"
-        print("Registering dataset {}\n".format(dataset.dataset_name))
+        logging.info("Registering dataset {}\n".format(dataset.dataset_name))
         dataset.did_client.add_dataset(scope=dataset.scope,
                 name=dataset.dataset_name, lifetime=dataset.lifetime,
                 rse=dataset.rse)
     except DataIdentifierAlreadyExists:
-        print("Dataset {} already exists".format(dataset.dataset_name))
+        logging.warning("Dataset {} already exists".format(dataset.dataset_name))
 
     try:
-        print("attaching dataset {}".format(dataset.dataset_name))
+        logging.info("attaching dataset {}".format(dataset.dataset_name))
         dataset.did_client.attach_dids(scope=dataset.scope,
                 name=dataset.dataset_name, dids=[{'scope': dataset.scope,
                     'name': dataset.dataset_name}])
     except RucioException:
-        print(" Dataset already attached")
+        logging.warning(" Dataset already attached")
+
+    logging.info("Dataset registration took {:.2} mins".format(
+        (time.time()-start_time)/60.))
 
 
     #
     # 3. Register files for replication
     #
-    print "-------------------------"
-    print("Registering file replicas\n")
+    logging.info("Registering file replicas")
 
+    start_time = time.time()
     for filemd in dataset.files:
 
-        print("Registering {}".format(filemd['name']))
+        logging.info("Registering {}".format(filemd['name']))
 
         # --- Check if a replica of the given file at the site already exists.
-        print("checking if file %s with scope %s has already a replica at %s"
+        logging.info("checking if file %s with scope %s has already a replica at %s"
               % (filemd['name'], filemd['scope'], dataset.rse))
 
         existing_replicas = list(dataset.rep_client.list_replicas([{'scope':
@@ -393,7 +392,7 @@ if __name__ == "__main__":
             existing_replicas = existing_replicas[0]
             if 'rses' in existing_replicas:
                 if dataset.rse in existing_replicas['rses']:
-                    print("File %s with scope %s has already a replica at %s"
+                    logging.warning("File %s with scope %s has already a replica at %s"
                           % (filemd['name'], dataset.scope, dataset.rse))
         else:
             # Register replica
@@ -407,9 +406,9 @@ if __name__ == "__main__":
                         # PFN is determined on its own
                         #'pfn': replica['pfn']}]):
 
-                print("File {} registered".format(filemd['name']))
+                logging.info("File {} registered".format(filemd['name']))
             else:
-                print("File {} registration failed".format(filemd['name']))
+                logging.warning("File {} registration failed".format(filemd['name']))
 
         # End check
 
@@ -417,25 +416,26 @@ if __name__ == "__main__":
         # 4. Attach replicas to the dataset
         #
         try:
-            print("Attaching file {0} to datset {1}".format(filemd['name'],
+            logging.info("Attaching file {0} to datset {1}".format(filemd['name'],
                 dataset.dataset_name))
             dataset.did_client.attach_dids(scope=dataset.scope,
                     name=dataset.dataset_name, 
                     dids=[{'scope': dataset.scope, 'name': filemd['name']}])
 
         except FileAlreadyExists:
-            print("File already exists")
+            logging.warning("File already exists")
 
+        logging.info("File replica registration took {:.2} mins".format(
+        (time.time()-start_time)/60.))
 
-    #
-    # 5. Upload data
-    #
+    logging.info("Data replication process complete!")
+    logging.info("Total time elapsed: {:.2f} mins".format(
+        (time.time()-global_start)/60.))
 
+if __name__ == "__main__":
 
-#   if __name__ == "__main__":
-#
-#       main()
-#
+    main()
+
 
 
 

@@ -10,7 +10,7 @@ end_time=$((${start_time}+5000))
     --scope ER8 \
     --datafind-server datafind.ligo.org:443 \
     --rse LIGOTEST \
-    --verbose \
+    --debug \
     --gps-start-time ${start_time} \
     --gps-end-time ${end_time} \
     --frame-type H1_HOFT_C02
