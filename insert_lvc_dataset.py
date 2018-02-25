@@ -28,7 +28,9 @@ Rucio scope is determined by run (engineering/observing run).
 
 
 import os,sys
+import time
 import warnings
+import multiprocessing
 import argparse
 from pycbc.frame import frame_paths
 from rucio.client.didclient import DIDClient
@@ -41,6 +43,7 @@ from gfal2 import Gfal2Context, GError
 from rucio.client.replicaclient import ReplicaClient
 import rucio.rse.rsemanager as rsemgr
 
+MAXTHREADS=multiprocessing.cpu_count()
 
 def parse_cmdline():
 
@@ -91,7 +94,12 @@ def parse_cmdline():
             datafind.ligo.org:443 for /cvmfs frames (defaults to whatever is in
             ${LIGO_DATAFIND_SERVER})""")
 
+    parser.add_argument("--nthreads", metavar="NTHREADS", type=int,
+            help="""Number of processes to launch to retrieve LFN
+            information""", default=MAXTHREADS)
+
     ap = parser.parse_args()
+
 
     return ap
 
@@ -132,7 +140,7 @@ class DatasetInjector(object):
 
     def __init__(self, dataset_name, start_time, end_time, frtype,
             datafind_server=None, scope=None, site=None, rse=None, check=True,
-            lifetime=None, dry_run=False, verbose=False):
+            lifetime=None, dry_run=False, nthreads=MAXTHREADS, verbose=False):
 
         if datafind_server is None:
             # If undefined, use default from environment
@@ -179,7 +187,7 @@ class DatasetInjector(object):
 
         # Create rucio names -- this should probably come from the lfn2pfn
         # algorithm, not me
-        self.list_files(frames)
+        self.list_files(frames, nthreads=nthreads)
 
 
     def find_frames(self):
@@ -208,7 +216,8 @@ class DatasetInjector(object):
 
         return frames
 
-    def list_files(self, frames):
+
+    def list_files(self, frames, nthreads):
         """
         Construct a list of files with the following dictionary keys:
 
@@ -223,25 +232,32 @@ class DatasetInjector(object):
 
         """
 
-        self.files = []
-        for frame in frames:
+        #p = multiprocessing.Pool(processes=nthreads)
+        #self.files = p.map(self._file_dict, frames)
+        self.files = map(self._file_dict, frames)
 
-            base_name = os.path.basename(frame)
-            name = base_name
-            directory = os.path.dirname(frame)
+    def _file_dict(self,frame):
+        """
+        Create a dictionary with LFN properties
+        """
 
-            size, checksum = self.check_storage("file://"+frame)
-            url = self.get_file_url(name)
+        base_name = os.path.basename(frame)
+        name = base_name
+        directory = os.path.dirname(frame)
 
-            filemd = {
-                    'rse':self.rse,
-                    'scope':self.scope,
-                    'name':name,
-                    'bytes':size,
-                    'filename':base_name,
-                    'adler32':checksum}#,
-                    #'pfn':url}
-            self.files.append(filemd)
+        size, checksum = self.check_storage("file://"+frame)
+        url = self.get_file_url(name)
+
+        filemd = {
+                'rse':self.rse,
+                'scope':self.scope,
+                'name':name,
+                'bytes':size,
+                'filename':base_name,
+                'adler32':checksum}#,
+                #'pfn':url}
+
+        return filemd
 
 
     def get_file_url(self, lfn):
@@ -301,11 +317,17 @@ def main():
     #
     # 1. Create the list of files to replicate
     #
+    start_time = time.time()
     dataset = DatasetInjector(ap.dataset_name, 
             ap.gps_start_time, ap.gps_end_time, ap.frame_type, 
             datafind_server=ap.datafind_server,
             scope=ap.scope, rse=ap.rse, lifetime=ap.lifetime,
             verbose=ap.verbose)
+
+    print("------------------------------------")
+    print("Data set identification/verification took {:.2} mins".format(
+        (time.time()-start_time)/60.0 ))
+    sys.exit()
 
     # XXX Playground: tinker here then move to methods in DatasetInjector
 
