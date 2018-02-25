@@ -1,6 +1,6 @@
 #!/bin/bash
-RUCIO_HOME=${PWD}
-RUCIO_ACCOUNT=root
+export RUCIO_HOME=${PWD}
+export RUCIO_ACCOUNT=root
 
 start_time=1126259457
 end_time=$((${start_time}+5000))

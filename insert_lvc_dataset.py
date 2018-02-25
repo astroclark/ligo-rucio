@@ -31,6 +31,7 @@ import os,sys
 import time
 import warnings
 import multiprocessing
+from functools import partial
 import argparse
 from pycbc.frame import frame_paths
 from rucio.client.didclient import DIDClient
@@ -126,8 +127,13 @@ def get_scope(start_time, end_time):
         warnings.warn(warnstr, Warning)
         return "AW"
 
+#
+# Support functions for DatSetInjector
+#
+# These need to be outside the class so we can use multiprocessing
+#
 
-def _file_dict(frame, rse, scope, gfal, global_url):
+def _file_dict(frame, rse, scope, global_url):
     """
     Create a dictionary with LFN properties
     """
@@ -136,7 +142,7 @@ def _file_dict(frame, rse, scope, gfal, global_url):
     name = basename
     directory = os.path.dirname(frame)
 
-    size, checksum = _check_storage(gfal, "file://"+frame)
+    size, checksum = _check_storage("file://"+frame)
     url = os.path.join(global_url, basename)
 
     return {
@@ -148,10 +154,13 @@ def _file_dict(frame, rse, scope, gfal, global_url):
             'adler32':checksum}#,
             #'pfn':url}
 
-def _check_storage(gfal,filepath):
+def _check_storage(filepath):
     """
     Check size and checksum of a file on storage
     """
+    # FIXME: Gfal2Context cannot be pickled so we have to instantiate here to
+    # use multiprocessing()
+    gfal = Gfal2Context()
     print("Checking url %s" % filepath)
     try:
         size = gfal.stat(str(filepath)).st_size
@@ -217,7 +226,7 @@ class DatasetInjector(object):
         self.did_client = DIDClient()
         self.rep_client = ReplicaClient()
 
-        self.gfal = Gfal2Context()
+#        self.gfal = Gfal2Context()
 
         # Locate frames
         frames = self.find_frames()
@@ -269,14 +278,15 @@ class DatasetInjector(object):
 
         """
 
-        #p = multiprocessing.Pool(processes=nthreads)
-        #self.files = p.map(self._file_dict, frames)
-        #self.files = map(_file_dict, frames)
+        pool = multiprocessing.Pool(processes=nthreads)
 
-        self.files = map(lambda frame: _file_dict(frame, self.rse, self.scope,
-            self.gfal, self.global_url), frames)
+        _partial_file_dict = partial(_file_dict, rse=self.rse, scope=self.scope,
+            global_url=self.global_url)
 
-#def _file_dict(frame, rse, scope, gfal, global_url):
+        self.files = pool.map(_partial_file_dict, frames)
+        
+        #self.files = map(lambda frame: _file_dict(frame, self.rse, self.scope,
+        #    self.gfal, self.global_url), frames)
 
     def get_global_url(self):
         """
@@ -305,7 +315,8 @@ class DatasetInjector(object):
 
 #########################################################################
 
-def main():
+#def main():
+if __name__ == "__main__":
 
     # Parse input
     ap = parse_cmdline()
@@ -413,10 +424,10 @@ def main():
     #
 
 
-if __name__ == "__main__":
-
-    main()
-
+#   if __name__ == "__main__":
+#
+#       main()
+#
 
 
 
