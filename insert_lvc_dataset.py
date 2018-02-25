@@ -133,28 +133,15 @@ def get_scope(start_time, end_time):
 # These need to be outside the class so we can use multiprocessing
 #
 
-def _file_dict(frame, rse, scope, global_url):
+def unwrap_file_dict(arg, **kwarg):
     """
-    Create a dictionary with LFN properties
+    External call to DatasetInjector method to permit multiprocessing
     """
+    return DatasetInjector._file_dict(arg, **kwarg)
 
-    basename = os.path.basename(frame)
-    name = basename
-    directory = os.path.dirname(frame)
 
-    size, checksum = _check_storage("file://"+frame)
-    url = os.path.join(global_url, basename)
 
-    return {
-            'rse':rse,
-            'scope':scope,
-            'name':name,
-            'bytes':size,
-            'filename':basename,
-            'adler32':checksum}#,
-            #'pfn':url}
-
-def _check_storage(filepath):
+def check_storage(filepath):
     """
     Check size and checksum of a file on storage
     """
@@ -234,6 +221,27 @@ class DatasetInjector(object):
         # Create rucio names -- this should probably come from the lfn2pfn
         # algorithm, not me
         self.list_files(frames, nthreads=nthreads)
+
+    def _file_dict(self, frame):
+        """
+        Create a dictionary with LFN properties
+        """
+
+        basename = os.path.basename(frame)
+        name = basename
+        directory = os.path.dirname(frame)
+
+        size, checksum = check_storage("file://"+frame)
+        url = os.path.join(global_url, basename)
+
+        return {
+                'rse':self.rse,
+                'scope':self.scope,
+                'name':name,
+                'bytes':size,
+                'filename':basename,
+                'adler32':checksum}#,
+                #'pfn':url}
 
 
     def find_frames(self):
