@@ -127,6 +127,43 @@ def get_scope(start_time, end_time):
         return "AW"
 
 
+def _file_dict(frame, rse, scope, gfal, global_url):
+    """
+    Create a dictionary with LFN properties
+    """
+
+    basename = os.path.basename(frame)
+    name = basename
+    directory = os.path.dirname(frame)
+
+    size, checksum = _check_storage(gfal, "file://"+frame)
+    url = os.path.join(global_url, basename)
+
+    return {
+            'rse':rse,
+            'scope':scope,
+            'name':name,
+            'bytes':size,
+            'filename':basename,
+            'adler32':checksum}#,
+            #'pfn':url}
+
+def _check_storage(gfal,filepath):
+    """
+    Check size and checksum of a file on storage
+    """
+    print("Checking url %s" % filepath)
+    try:
+        size = gfal.stat(str(filepath)).st_size
+        checksum = gfal.checksum(str(filepath), 'adler32')
+        print("Got size and checksum of file: %s size=%s checksum=%s"
+                % (filepath, size, checksum))
+    except GError:
+        print("no file found at %s" % filepath)
+        return False
+    return size, checksum
+
+
 
 class DatasetInjector(object):
     """
@@ -234,37 +271,12 @@ class DatasetInjector(object):
 
         #p = multiprocessing.Pool(processes=nthreads)
         #self.files = p.map(self._file_dict, frames)
-        self.files = map(self._file_dict, frames)
+        #self.files = map(_file_dict, frames)
 
-    def _file_dict(self,frame):
-        """
-        Create a dictionary with LFN properties
-        """
+        self.files = map(lambda frame: _file_dict(frame, self.rse, self.scope,
+            self.gfal, self.global_url), frames)
 
-        base_name = os.path.basename(frame)
-        name = base_name
-        directory = os.path.dirname(frame)
-
-        size, checksum = self.check_storage("file://"+frame)
-        url = self.get_file_url(name)
-
-        filemd = {
-                'rse':self.rse,
-                'scope':self.scope,
-                'name':name,
-                'bytes':size,
-                'filename':base_name,
-                'adler32':checksum}#,
-                #'pfn':url}
-
-        return filemd
-
-
-    def get_file_url(self, lfn):
-        """
-        Return the rucio url of a file.
-        """
-        return self.url + '/' + lfn
+#def _file_dict(frame, rse, scope, gfal, global_url):
 
     def get_global_url(self):
         """
@@ -286,25 +298,9 @@ class DatasetInjector(object):
         url = schema + '://' + hostname
         if port != 0:
             url = url + ':' + str(port)
-        self.url = url + prefix 
+        self.global_url = url + prefix 
 
-        print("Determined base url %s" % self.url)
-
-
-    def check_storage(self, filepath):
-        """
-        Check size and checksum of a file on storage
-        """
-        print("Checking url %s" % filepath)
-        try:
-            size = self.gfal.stat(str(filepath)).st_size
-            checksum = self.gfal.checksum(str(filepath), 'adler32')
-            print("Got size and checksum of file: %s size=%s checksum=%s"
-                    % (filepath, size, checksum))
-        except GError:
-            print("no file found at %s" % filepath)
-            return False
-        return size, checksum
+        print("Determined base url %s" % self.global_url)
 
 
 #########################################################################
