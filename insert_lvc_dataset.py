@@ -41,8 +41,10 @@ from rucio.common.exception import RucioException
 from rucio.common.exception import FileAlreadyExists
 
 from gfal2 import Gfal2Context, GError
+#from gfal2_util.shell import Gfal2Shell
 from rucio.client.replicaclient import ReplicaClient
 import rucio.rse.rsemanager as rsemgr
+import ligo_lfn2pfn
 
 MAXTHREADS=multiprocessing.cpu_count()
 
@@ -144,17 +146,15 @@ def unwrap_file_dict(arg, **kwarg):
     """
     return DatasetInjector._file_dict(*arg, **kwarg)
 
+
 def check_storage(filepath):
     """
     Check size and checksum of a file on storage
     """
-    # FIXME: Gfal2Context cannot be pickled so we have to instantiate here to
-    # use multiprocessing()
-    gfal = Gfal2Context()
     logging.info("Checking url %s" % filepath)
     try:
-        size = gfal.stat(str(filepath)).st_size
-        checksum = gfal.checksum(str(filepath), 'adler32')
+        size = Gfal2Context().stat(str(filepath)).st_size
+        checksum = Gfal2Context().checksum(str(filepath), 'adler32')
         logging.info("Got size and checksum of file: %s size=%s checksum=%s"
                 % (filepath, size, checksum))
     except GError:
@@ -217,12 +217,7 @@ class DatasetInjector(object):
         # Locate frames
         frames = self.find_frames()
 
-        if dry_run:
-            logging.info("Dry run: ending process before constructing replica list")
-            sys.exit(0)
-
-        # Create rucio names -- this should probably come from the lfn2pfn
-        # algorithm, not me
+        # Create list of rucio replicas
         self.list_files(frames, nprocs=nprocs)
 
 
@@ -282,6 +277,7 @@ class DatasetInjector(object):
         Create a dictionary with LFN properties
         """
 
+
         basename = os.path.basename(frame)
         name = basename
         directory = os.path.dirname(frame)
@@ -289,14 +285,15 @@ class DatasetInjector(object):
         size, checksum = check_storage("file://"+frame)
         url = os.path.join(self.global_url, basename)
 
-        return {
-                'rse':self.rse,
+        pfn = ligo_lfn2pfn.ligo_lab(self.scope, name, None, None, None)
+
+        return {'rse':self.rse,
                 'scope':self.scope,
                 'name':name,
                 'bytes':size,
                 'filename':basename,
-                'adler32':checksum}#,
-                #'pfn':url}
+                'adler32':checksum,
+                'pfn':pfn}
 
 
     def get_global_url(self):
@@ -338,6 +335,7 @@ def main():
 
     logFormatter = logging.Formatter("%(asctime)s [%(threadName)-12.12s] [%(levelname)-5.5s]  %(message)s")
     rootLogger = logging.getLogger()
+    logging.getLogger("gfal2").setLevel(logging.WARNING)
 
     fileHandler = logging.FileHandler(ap.log_file)
     fileHandler.setFormatter(logFormatter)
@@ -363,6 +361,11 @@ def main():
 
     logging.info("File identification/verification took {:.2} mins".format(
         (time.time()-start_time)/60.))
+
+    if ap.dry_run:
+        logging.info("Dry run: ending process before rucio interactions")
+        sys.exit(0)
+
 
     # Recipe:
     #   a) create and register a dataset in the RSE
