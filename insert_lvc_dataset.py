@@ -175,7 +175,7 @@ class DatasetInjector(object):
     def __init__(self, dataset_name, start_time, end_time, frtype,
             datafind_server=None, scope=None, site=None, rse=None, check=True,
             lifetime=None, dry_run=False, no_multiprocs=False,
-            nprocs=MAXTHREADS, verbose=False):
+            nprocs=MAXTHREADS):
 
         if datafind_server is None:
             # If undefined, use default from environment
@@ -359,7 +359,7 @@ def main():
             datafind_server=ap.datafind_server,
             scope=ap.scope, rse=ap.rse, lifetime=ap.lifetime,
             no_multiprocs=ap.disable_multiprocessing,
-            verbose=ap.verbose)
+            dry_run=ap.dry_run)
 
     logging.info("File identification/verification took {:.2} mins".format(
         (time.time()-start_time)/60.))
