@@ -116,12 +116,14 @@ def parse_cmdline():
 def get_scope(start_time, end_time):
     """
     Determine scope for given GPS times
+
+    See e.g., https://wiki.ligo.org/LSC/JRPComm/EngineeringRuns
     """
 
     # FIXME: These times are non-exhaustive and inexact/unverified
     DATA_RUNS={
             'ER8':(1123858817,1126623617),
-            'O1':(1126623617,1137254417),
+            'O1':(1126623617,1134057617),
             'ER9':(1152136817,1152169157),
             'O2':(1164499217,1187654418)
             }
@@ -214,6 +216,10 @@ class DatasetInjector(object):
 
         # Locate frames
         frames = self.find_frames()
+
+        if dry_run:
+            logging.info("Dry run: ending process before constructing replica list")
+            sys.exit(0)
 
         # Create rucio names -- this should probably come from the lfn2pfn
         # algorithm, not me
