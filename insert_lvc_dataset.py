@@ -155,6 +155,9 @@ def check_storage(filepath):
     try:
         size = Gfal2Context().stat(str(filepath)).st_size
         checksum = Gfal2Context().checksum(str(filepath), 'adler32')
+        # FIXME: some frames have len(checksum)=7, is there a better way to
+        # force len(checksum)=8 than prepending a zero manually?
+        if len(checksum)!=8: checksum="0{}".format(checksum)
         logging.info("Got size and checksum of file: %s size=%s checksum=%s"
                 % (filepath, size, checksum))
     except GError:
