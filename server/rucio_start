@@ -6,12 +6,12 @@ RUCIOETCHOST=/home/james.clark/ligo-rucio/server/etc # bind this to /opt/rucio/e
 
 docker run --privileged \
     --name rucio-server \
+    -v ${RUCIOETCHOST}:/opt/rucio/etc \
     -v /etc/hostname:/etc/hostname \
     -v /var/log/httpd:/var/log/httpd \
     -v /etc/grid-security/hostcert.pem:/etc/grid-security/hostcert.pem \
     -v /etc/grid-security/hostkey.pem:/etc/grid-security/hostkey.pem \
     -v /sys/fs/cgroup:/sys/fs/cgroup:ro \
-    -v /opt/rucio/etc:/opt/rucio/etc \
     -v /etc/grid-security:/etc/grid-security \
     -v /etc/pki:/etc/pki \
     -d -p 443:443 ${DOCKERIMAGE}
