@@ -1,10 +1,7 @@
 #!/bin/bash
-
-#DOCKERIMAGE=gitlab-registry.cern.ch/rucio01/rucio/mysql_server 
-DOCKERIMAGE=rucio/rucio-server:release-1.16.1
+DOCKERIMAGE=rucio/rucio-server:release-1.16.3
 #RUCIOETCHOST=/home/james.clark/ligo-rucio/server/etc # bind this to /opt/rucio/etc
-RUCIOETCHOST=/opt/rucio/etc # bind this to /opt/rucio/etc
-#RUCIOETCHOST=/home/james.clark/etc # bind this to /opt/rucio/etc
+RUCIOETCHOST=/home/jclark/Projects/ligo-rucio/server/etc # bind this to /opt/rucio/etc
 
 docker run --privileged \
     --name rucio-server \
