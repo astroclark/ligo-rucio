@@ -11,15 +11,12 @@ from dateutil import parser
 
 
 requests.packages.urllib3.disable_warnings()
-PROXY = '/opt/rucio/ska/x509VomsProxy'
+PROXY = '/opt/rucio/ligo/robot-x509'
 
-status, output = commands.getstatusoutput('voms-proxy-info --all --file %s' % (PROXY))
+status, subject = commands.getstatusoutput('grid-proxy-info -file {} -subject'.format(PROXY))
 if status:
     sys.exit(1)
 
-subject = output.split('\n')[0]
-subject = subject[12:]
-subject += '/CN=' + str(int(time.time()))
 print PROXY
 print subject
 
@@ -59,4 +56,4 @@ while at < bt:
 
     if at < bt:
         print 'retrying'
-        time.sleep(1)```
+        time.sleep(1)
