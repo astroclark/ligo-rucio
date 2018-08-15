@@ -99,12 +99,8 @@ def check_storage(filepath):
 
     try:
         size = os.stat(filepath).st_size
-        print size
         adler_checksum = adler32(filepath)
-        print adler_checksum
         md5_checksum = md5(filepath)
-        print md5_checksum
-        sys.exit()
 
         # FIXME: some frames have len(adler_checksum)=7, is there a better way to
         # force len(adler_checksum)=8 than prepending a zero manually?
@@ -112,7 +108,7 @@ def check_storage(filepath):
         logging.info("Got size and checksum of file: %s size=%s adler32 checksum=%s md5 checksum=%s"
                 % (filepath, size, adler_checksum, md5_checksum))
     except:
-        logging.warning("no file found at %s" % filepath)
+        logging.warning("failed to read file at %s" % filepath)
         return False
     return size, adler_checksum, md5_checksum
 
