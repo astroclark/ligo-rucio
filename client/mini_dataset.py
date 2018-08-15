@@ -152,7 +152,7 @@ class DatasetInjector(object):
         """
 
         # Datafind query
-        logging.info("Loading file list:{}".format(self.LIGO_DATAFIND_SERVER))
+        logging.info("Loading file list:{}".format(self.filelist))
 
         f = open(self.filelist)
         frames = f.readlines()
