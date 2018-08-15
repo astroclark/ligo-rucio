@@ -159,7 +159,7 @@ class DatasetInjector(object):
         # Datafind query
         logging.info("Loading file list:{}".format(self.filelist))
 
-        with open(filename) as f:
+        with open(self.filelist) as f:
             frames = f.read().splitlines()
         f.close()
 
