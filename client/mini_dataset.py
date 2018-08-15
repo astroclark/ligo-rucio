@@ -49,8 +49,15 @@ def parse_cmdline():
 
     parser = argparse.ArgumentParser(description=__doc__)
 
-    parser.add_argument("--dataset_name", type=str, default=None, required=True,
+    parser.add_argument("--dataset-name", type=str, default=None, required=True,
             help="""Dataset name""")
+
+    parser.add_argument("--scope", type=str, default="TEST", required=False,
+            help="""Scope of the dataset (default: data run corresponding to
+            requested times""")
+
+    parser.add_argument("--lifetime", type=float, default=3600, required=False,
+            help="""Dataset lifetime in seconds (default=3600 for testing)""")
 
     parser.add_argument("--rse", type=str, default=None, required=True,
             help="""Rucio storage element to host frames""")
@@ -69,17 +76,6 @@ def parse_cmdline():
             default=os.path.basename(__file__).replace('py','log'),
             help="""Direct logging information to this file""")
 
-    parser.add_argument("--scope", type=str, default="TEST", required=True,
-            help="""Scope of the dataset (default: data run corresponding to
-            requested times""")
-
-    parser.add_argument("--lifetime", type=float, default=3600, required=False,
-            help="""Dataset lifetime in seconds (default=3600 for testing)""")
-
-
-    parser.add_argument("--ifo", type=str, default=None, required='--open-data'
-            in sys.argv, help="""Interferometer label (e.g., H (LIGO Hanford), L
-            (LIGO Livingston), V (Virgo), ...""")
 
     parser.add_argument("--file-list", type=str, default=None,
             required=True, help="""A text file with a list of files for this dataset""")
