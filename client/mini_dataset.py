@@ -95,7 +95,11 @@ def check_storage(filepath):
     """
     Check size and checksum of a file on storage
     """
-    logging.info("Checking %s" % filepath)
+    logging.info("Checking {}" .format(filepath))
+
+    print filepath
+    sys.exit()
+
     try:
         size = os.stat(filepath).st_size
         adler_checksum = adler32(filepath)
@@ -142,12 +146,6 @@ class DatasetInjector(object):
         self.list_files(frames)
 
         print self.files
-        print "***************************************************"
-        print "***************************************************"
-        print "***************************************************"
-        print "***************************************************"
-        print "***************************************************"
-        print "***************************************************"
         sys.exit()
 
 
