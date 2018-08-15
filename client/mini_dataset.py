@@ -97,6 +97,14 @@ def check_storage(filepath):
     """
     logging.info("Checking {}" .format(filepath))
 
+    size = os.stat(filepath).st_size
+    print size
+    adler_checksum = adler32(filepath)
+    print adler_checksum
+    md5_checksum = md5(filepath)
+    print md5_checksum
+    sys.exit()
+
     try:
         size = os.stat(filepath).st_size
         print size
