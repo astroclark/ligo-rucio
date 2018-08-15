@@ -139,7 +139,7 @@ class DatasetInjector(object):
         frames = self.find_frames()
 
         # Create list of rucio replicas
-        self.list_files(frames, nprocs=nprocs)
+        self.list_files(frames)
 
         print self.files
         sys.exit()
