@@ -43,7 +43,6 @@ from rucio.client.replicaclient import ReplicaClient
 import rucio.rse.rsemanager as rsemgr
 import ligo_lfn2pfn
 
-MAXTHREADS=multiprocessing.cpu_count()
 
 def parse_cmdline():
 
