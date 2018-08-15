@@ -122,7 +122,7 @@ class DatasetInjector(object):
     4) Register Rucio dataset
     """
 
-    def __init__(self, dataset_name, filelist=None, scope=None, rse=None,
+    def __init__(self, filelist=None, dataset_name=None, scope=None, rse=None,
                  lifetime=None):
 
         self.dataset_name = dataset_name
@@ -265,12 +265,8 @@ def main():
     # 1. Create the list of files to replicate
     #
     start_time = time.time()
-    dataset = DatasetInjector(ap.dataset_name, 
-            ap.gps_start_time, ap.gps_end_time, ap.frame_type, 
-            datafind_server=ap.datafind_server,
-            scope=ap.scope, rse=ap.rse, lifetime=ap.lifetime,
-            no_multiprocs=ap.disable_multiprocessing,
-            dry_run=ap.dry_run)
+    dataset = DatasetInjector(ap.file_list, ap.dataset_name, scope=ap.scope,
+                              rse=ap.rse, lifetime=ap.lifetime)
 
     logging.info("File identification/verification took {:.2} mins".format(
         (time.time()-start_time)/60.))
