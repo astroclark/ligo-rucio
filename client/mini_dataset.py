@@ -129,6 +129,7 @@ class DatasetInjector(object):
         self.dataset_name = dataset_name
         self.filelist = filelist
         self.rse = rse
+        self.scope = scope
         self.lifetime = lifetime
 
         # Initialization for dataset
