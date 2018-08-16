@@ -6,4 +6,5 @@ ${rucio_repo}/demos/register-dataset-ascii.py \
     --rse LIGO-CIT \
     --dataset-name test-dataset-0 \
     --debug --verbose \
+    --dry-run \
     --file-list /home/jclark/Projects/ligo-rucio/data/test-dataset-0.dat

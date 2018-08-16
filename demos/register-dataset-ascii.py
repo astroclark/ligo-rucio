@@ -143,9 +143,6 @@ class DatasetInjector(object):
         # Create list of rucio replicas
         self.list_files(frames)
 
-        print self.files
-        sys.exit()
-
 
     def find_frames(self):
         """
