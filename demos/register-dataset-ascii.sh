@@ -2,7 +2,7 @@
 rucio_repo=/home/jclark/Projects/ligo-rucio
 source ${rucio_repo}/client/etc/rucio-user-env.sh
 
-./mini_dataset.py \
+${rucio_repo}/demos/register-dataset-ascii.py \
     --rse LIGO-CIT \
     --dataset-name test-dataset-0 \
     --debug --verbose \
