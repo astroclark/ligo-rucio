@@ -7,4 +7,4 @@ source ${PWD}/etc/rucio-user-env.sh
     --rse LIGO-CIT \
     --dataset-name test-dataset-0 \
     --debug --verbose \
-    --file-list data-insertion/test-dataset-0.dat
+    --file-list data/test-dataset-0.dat
