@@ -15,6 +15,15 @@
 #
 # Authors:
 # - James Alexander Clark, <james.clark@ligo.org>, 2018-2019
-"""
-"""
-__all__ = ['ligo_lfn2pfn']
+"""Setup script for ligo_rucio"""
+from distutils.core import setup
+
+setup(
+    name='gw_rucio',
+    version='0.1dev',
+    packages=['ligo_rucio',],
+    scripts=[],
+    license='GPL',
+    long_description=open('README.md').read(),
+    )
+

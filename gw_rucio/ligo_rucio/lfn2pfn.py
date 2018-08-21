@@ -17,6 +17,8 @@
 # - Brian Bockelman, <bbockelm@cse.unl.edu>, 2017-2018
 # - James Alexander Clark, <james.clark@ligo.org>, 2018-2019
 """
+lfn2pfn.py
+
 Default LFN-to-path algorithms for LIGO
 """
 import re
@@ -57,6 +59,7 @@ def ligo_lab(scope, name, rse, rse_attrs, proto_attrs):
             dataset_pretty = kind.lower()
         else:
             dataset_pretty = '%s_%s' % (kind.lower(), calib)
+        
     else:
         dataset_pretty = dataset
 
