@@ -16,5 +16,6 @@
 # Authors:
 # - James Alexander Clark, <james.clark@ligo.org>, 2018-2019
 """
+Modules for interacting with LIGO data using rucio
 """
 __all__ = ['lfn2pfn']

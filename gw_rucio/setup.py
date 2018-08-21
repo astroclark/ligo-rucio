@@ -22,7 +22,7 @@ setup(
     name='gw_rucio',
     version='0.1dev',
     packages=['ligo_rucio',],
-    scripts=[],
+    scripts=['bin/ligo_lfn2pfn'],
     license='GPL',
     long_description=open('README.md').read(),
     )
