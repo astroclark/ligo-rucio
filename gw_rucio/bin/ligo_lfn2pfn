@@ -1,0 +1,107 @@
+#!/usr/bin/env python
+# -*- coding:utf-8 -*-
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+#
+# Authors:
+# - James Alexander Clark, <james.clark@ligo.org>, 2018-2019
+"""Call the ligo_rucio LFN2PFN algorithm to determine the physical filename
+(PFN) for a given logical filename and scope.
+
+We assume the scope is simply the science or engineering run in which the data
+was taken.  This script has three modes of operation:
+
+    1. Return the expected PFN for a given LFN.
+    2. Assert that the algorithmic PFN for an LFN matches a given PFN
+    3. Demonstrate the algorithm with some hard-coded examples.
+
+"""
+
+import os
+import argparse
+from ligo_rucio import lfn2pfn
+
+def parse_cmdline():
+    """Parse command line"""
+
+    parser = argparse.ArgumentParser(description=__doc__,
+                                     formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser.add_argument("frame_name", type=str, default=None, nargs='?',
+                        help="""Name of the frame file (LFN)""")
+    parser.add_argument("--obs-run", type=str, default="SCOPE",
+                        help="""Observing epoch (rucio scope). E.g., "O2" """)
+    parser.add_argument("--pfn", type=str, default=None,
+                        help="""Full path to frame for verification""")
+    parser.add_argument("--prefix", type=str, default="/hdfs/frames",
+                        help="""Frame directory prefix for a given site""")
+
+    cmdline_args = parser.parse_args()
+
+    return cmdline_args
+
+## Input
+ARGS = parse_cmdline()
+
+## Demonstration Mode
+if ARGS.frame_name is None:
+    FNS = {
+        "postO1/hoft/H1/H-H1_HOFT_C00-11631/H-H1_HOFT_C00-1163149312-4096.gwf":
+        ("postO1", "H-H1_HOFT_C00-1163149312-4096.gwf"),
+        "postO1/hoft/L1/L-L1_HOFT_C00-11585/L-L1_HOFT_C00-1158533120-4096.gwf":
+        ("postO1", "L-L1_HOFT_C00-1158533120-4096.gwf"),
+        "O2/hoft_C01/H1/H-H1_HOFT_C01-11880/H-H1_HOFT_C01-1188003840-4096.gwf":
+        ("O2", "H-H1_HOFT_C01-1188003840-4096.gwf"),
+        "O1/hoft_C01_4kHz/L1/L-L1_HOFT_C01_4kHz-11372/L-L1_HOFT_C01_4kHz-1137250304-4096.gwf":
+        ("O1", "L-L1_HOFT_C01_4kHz-1137250304-4096.gwf"),
+        "AdVirgo/HrecOnline/V-V1Online-11922/V-V1Online-1192294000-2000.gwf":
+        ("AdVirgo", "V-V1Online-1192294000-2000.gwf"),
+        "O2/V1O2Repro1A/V-V1O2Repro1A-11879/V-V1O2Repro1A-1187990000-5000.gwf":
+        ("O2", "V-V1O2Repro1A-1187990000-5000.gwf")
+        }
+    print "-----------------------------------------------------------------"
+    for pfn in FNS:
+        algorithmic_pfn = lfn2pfn.ligo_lab(*FNS[pfn], rse=None, rse_attrs=None, proto_attrs=None)
+        assert algorithmic_pfn == pfn, "{0}:{1} -> {2} (should be {3})".format(
+            FNS[pfn][0], FNS[pfn][1],
+            os.path.join(ARGS.prefix, algorithmic_pfn),
+            os.path.join(ARGS.prefix, pfn))
+        print "pfn:{}".format(os.path.join(ARGS.prefix, algorithmic_pfn))
+        print "scope:{}".format(FNS[pfn][0])
+        print "lfn:{}".format(FNS[pfn][1])
+        print "did:{0}:{1}".format(FNS[pfn][0], FNS[pfn][1])
+        print "-----------------------------------------------------------------"
+## Return PFN
+elif ARGS.frame_name is not None and ARGS.pfn is None:
+    PFN = lfn2pfn.ligo_lab(ARGS.obs_run, ARGS.frame_name, None, None, None)
+    print "------------------- LIGO LFN2PFN Algorithm ----------------------"
+    print "Input:"
+    print " LFN: {}".format(ARGS.frame_name)
+    print " Scope: {}".format(ARGS.obs_run)
+    print " DID:  {0}:{1}".format(ARGS.obs_run, ARGS.frame_name)
+    print " Frames prefix: {}".format(ARGS.prefix)
+    print "Result:"
+    print " PFN: {}".format(os.path.join(ARGS.prefix, PFN))
+    print "-----------------------------------------------------------------"
+## Assert algorithmic PFN == supplied PFN
+elif ARGS.frame_name is not None and ARGS.pfn is not None:
+    PFN = lfn2pfn.ligo_lab(ARGS.obs_run, ARGS.frame_name, None, None, None)
+    print "------------------- LIGO LFN2PFN Algorithm ----------------------"
+    print "Input:"
+    print " PFN: {}".format(ARGS.prefix)
+    print " LFN: {}".format(ARGS.frame_name)
+    print " Scope: {}".format(ARGS.obs_run)
+    print " DID:  {0}:{1}".format(ARGS.obs_run, ARGS.frame_name)
+    print " Frames prefix: {}".format(ARGS.prefix)
+    print "Result:"
+    print " PFN: {}".format(os.path.join(ARGS.prefix, PFN))
+    print "-----------------------------------------------------------------"
