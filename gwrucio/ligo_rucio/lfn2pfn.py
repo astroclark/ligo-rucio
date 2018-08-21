@@ -23,7 +23,7 @@ Default LFN-to-path algorithms for LIGO
 """
 import re
 
-from rucio.rse.protocols.protocol import RSEDeterministicTranslation
+#from rucio.rse.protocols.protocol import RSEDeterministicTranslation
 
 _GWF_RE = re.compile(r'([A-Z]+)-([A-Za-z0-9_]+)-([0-9]{5,5})(.*)')
 _DATASET_RE = re.compile(r'([A-Z0-9]+)_([A-Z0-9]+)_([A-Za-z0-9_]+)')
@@ -67,7 +67,7 @@ def ligo_lab(scope, name, rse, rse_attrs, proto_attrs):
     return "%s/%s/%s/%s/%s" % (scope, dataset_pretty, detector_pretty, dir_hash, name)
 
 
-RSEDeterministicTranslation.register(ligo_lab)
+#RSEDeterministicTranslation.register(ligo_lab)
 
 
 if __name__ == '__main__':
