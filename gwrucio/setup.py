@@ -19,7 +19,7 @@
 from distutils.core import setup
 
 setup(
-    name='gw_rucio',
+    name='gwrucio',
     version='0.1dev',
     packages=['ligo_rucio',],
     scripts=['bin/ligo_lfn2pfn'],
