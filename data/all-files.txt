@@ -1,0 +1,15 @@
+/home/jclark/Projects/ligo-rucio/data/TEST/hoft_C02/H-H1_HOFT_C02-11372/H-H1_HOFT_C02-1137201152-4096.gwf
+/home/jclark/Projects/ligo-rucio/data/TEST/hoft_C02/H-H1_HOFT_C02-11372/H-H1_HOFT_C02-1137205248-4096.gwf
+/home/jclark/Projects/ligo-rucio/data/TEST/hoft_C02/H-H1_HOFT_C02-11372/H-H1_HOFT_C02-1137209344-4096.gwf
+/home/jclark/Projects/ligo-rucio/data/TEST/hoft_C02/H-H1_HOFT_C02-11372/H-H1_HOFT_C02-1137213440-4096.gwf
+/home/jclark/Projects/ligo-rucio/data/TEST/hoft_C02/H-H1_HOFT_C02-11372/H-H1_HOFT_C02-1137217536-4096.gwf
+/home/jclark/Projects/ligo-rucio/data/TEST/hoft_C02/H-H1_HOFT_C02-11372/H-H1_HOFT_C02-1137221632-4096.gwf
+/home/jclark/Projects/ligo-rucio/data/TEST/hoft_C02/H-H1_HOFT_C02-11372/H-H1_HOFT_C02-1137225728-4096.gwf
+/home/jclark/Projects/ligo-rucio/data/TEST/hoft_C02/H-H1_HOFT_C02-11372/H-H1_HOFT_C02-1137229824-4096.gwf
+/home/jclark/Projects/ligo-rucio/data/TEST/hoft_C02/H-H1_HOFT_C02-11372/H-H1_HOFT_C02-1137233920-4096.gwf
+/home/jclark/Projects/ligo-rucio/data/TEST/hoft_C02/H-H1_HOFT_C02-11372/H-H1_HOFT_C02-1137238016-4096.gwf
+/home/jclark/Projects/ligo-rucio/data/TEST/hoft_C02/H-H1_HOFT_C02-11372/H-H1_HOFT_C02-1137242112-4096.gwf
+/home/jclark/Projects/ligo-rucio/data/TEST/hoft_C02/H-H1_HOFT_C02-11372/H-H1_HOFT_C02-1137246208-4096.gwf
+/home/jclark/Projects/ligo-rucio/data/TEST/hoft_C02/H-H1_HOFT_C02-11372/H-H1_HOFT_C02-1137250304-4096.gwf
+/home/jclark/Projects/ligo-rucio/data/TEST/hoft_C02/H-H1_HOFT_C02-11372/H-H1_HOFT_C02-1137254400-4096.gwf
+/home/jclark/Projects/ligo-rucio/data/TEST/hoft/L1/L-L1_HOFT_C00-11585/L-L1_HOFT_C00-1158533120-4096.gwf
