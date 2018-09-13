@@ -21,7 +21,7 @@ ftsserver=https://fts.mwt2.org:8446
 dtstamp="`date +%F-%A-%H.%M.%S `"
 echo -e "\n\n---- ${dtstamp} ----" >> ${ftsproxylog}
 
-## Create proxy
+## Create robot proxy
 #${proxytool} -cert ${hostcert} -key ${hostkey} -out  ${x509proxy} -debug >> ${ftsproxylog} 2>&1
 
 ## Temporary: Use LIGO user proxy. Send a reminder mail if this is about to expire
@@ -40,5 +40,7 @@ if (( proxytimeleft < 3600 ))
 fi
 
 ## Delgate proxy
+echo "Delegating: " >> ${ftsproxylog} 2>&1
+echo "${ftsdelegate} -v -s ${ftsserver} --cert ${x509proxy} --key ${x509proxy}"  >> ${ftsproxylog} 2>&1
 ${ftsdelegate} -v -s ${ftsserver} --cert ${x509proxy} --key ${x509proxy}  >> ${ftsproxylog} 2>&1
 
