@@ -4,6 +4,7 @@
 # Better yet: find $PWD -type f -name *gwf
 ligo_register_dataset \
     --rse LIGO-CIT \
-    --dataset-name test-dataset-4y \
+    --scope TEST \
+    --dataset-name L-L1_HOFT_C00-11370b \
     --debug --verbose \
-    --file-list /home/jclark/Projects/ligo-rucio/data/test-filelist.txt
+    --file-list /home/jclark/Projects/ligo-rucio/data/L-L1_HOFT_C00-11370.txt
