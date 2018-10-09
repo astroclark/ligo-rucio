@@ -2,11 +2,11 @@
 
 # Get ascii list of frames with e.g., ls -d -1 $PWD/**/*gwf.  Ideally use DiskCache.
 # Better yet: find $PWD -type f -name *gwf
-~/src/gwrucio/bin/ligo_register_data \
+ligo_register_data \
     --rse LIGO-CIT-ARCHIVE \
     --scope ER8 \
     --debug --verbose \
-  /cvmfs/oasis.opensciencegrid.org/ligo/frames/ER8/hoft/H1/H-H1_HOFT_C00-11238/H-H1_HOFT_C00-1123856384-4096.gwf
+  /hdfs/frames/ER8/hoft/H1/H-H1_HOFT_C00-11238/H-H1_HOFT_C00-1123880960-4096.gwf
 
 # /cvmfs/oasis.opensciencegrid.org/ligo/frames/ER8/hoft/H1/H-H1_HOFT_C00-11238/H-H1_HOFT_C00-1123856384-4096.gwf
 # /cvmfs/oasis.opensciencegrid.org/ligo/frames/ER8/hoft/H1/H-H1_HOFT_C00-11238/H-H1_HOFT_C00-1123860480-4096.gwf
