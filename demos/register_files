@@ -2,7 +2,7 @@
 
 # Get ascii list of frames with e.g., ls -d -1 $PWD/**/*gwf.  Ideally use DiskCache.
 # Better yet: find $PWD -type f -name *gwf
-~/src/gwrucio/bin/ligo_register_data \
+ligo_register_data \
     --rse LIGO-CIT-ARCHIVE \
     --scope ER8 \
     --debug --verbose \
