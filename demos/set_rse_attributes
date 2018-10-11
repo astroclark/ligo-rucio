@@ -6,7 +6,9 @@ rucio-admin rse set-attribute --rse ${rse} --key mountpoint --value archive
 rucio-admin rse set-attribute --rse ${rse} --key type --value TEST
 rucio-admin rse set-attribute --rse ${rse} --key site --value CIT
 rucio-admin rse set-attribute --rse ${rse} --key ALL --value 1
-rucio-admin rse set-attribute --rse ${rse} --key ligo_lab --value 1
+rucio-admin rse set-attribute --rse ${rse} --key LIGO_LAB --value 1
+rucio-admin rse set-attribute --rse ${rse} --key fts --value https://fts.mwt2.org:8446
+rucio-admin rse set-attribute --rse ${rse} --key fts_testing --value https://fts.mwt2.org:8446
 
 # LIGO-CIT-HDFS
 rse="LIGO-CIT-HDFS"
@@ -14,7 +16,7 @@ rucio-admin rse set-attribute --rse ${rse} --key mountpoint --value hdfs
 rucio-admin rse set-attribute --rse ${rse} --key type --value TEST
 rucio-admin rse set-attribute --rse ${rse} --key site --value CIT
 rucio-admin rse set-attribute --rse ${rse} --key ALL --value 1
-rucio-admin rse set-attribute --rse ${rse} --key ligo_lab --value 1
+rucio-admin rse set-attribute --rse ${rse} --key LIGO_LAB --value 1
 rucio-admin rse set-attribute --rse ${rse} --key fts --value https://fts.mwt2.org:8446
 rucio-admin rse set-attribute --rse ${rse} --key fts_testing --value https://fts.mwt2.org:8446
 
@@ -25,7 +27,7 @@ rucio-admin rse set-attribute --rse ${rse} --key mountpoint --value hdfs
 rucio-admin rse set-attribute --rse ${rse} --key type --value ARCHIVE
 rucio-admin rse set-attribute --rse ${rse} --key site --value CIT
 rucio-admin rse set-attribute --rse ${rse} --key ALL --value 1
-rucio-admin rse set-attribute --rse ${rse} --key ligo_lab --value 1
+rucio-admin rse set-attribute --rse ${rse} --key LIGO_LAB --value 1
 rucio-admin rse set-attribute --rse ${rse} --key fts --value https://fts.mwt2.org:8446
 rucio-admin rse set-attribute --rse ${rse} --key fts_testing --value https://fts.mwt2.org:8446
 
@@ -35,7 +37,7 @@ rucio-admin rse set-attribute --rse ${rse} --key mountpoint --value archive
 rucio-admin rse set-attribute --rse ${rse} --key type --value TEST
 rucio-admin rse set-attribute --rse ${rse} --key site --value LHO
 rucio-admin rse set-attribute --rse ${rse} --key ALL --value 1
-rucio-admin rse set-attribute --rse ${rse} --key ligo_lab --value 1
+rucio-admin rse set-attribute --rse ${rse} --key LIGO_LAB --value 1
 rucio-admin rse set-attribute --rse ${rse} --key fts --value https://fts.mwt2.org:8446
 rucio-admin rse set-attribute --rse ${rse} --key fts_testing --value https://fts.mwt2.org:8446
 
@@ -45,6 +47,6 @@ rucio-admin rse set-attribute --rse ${rse} --key mountpoint --value hdfs
 rucio-admin rse set-attribute --rse ${rse} --key type --value TEST
 rucio-admin rse set-attribute --rse ${rse} --key site --value LHO
 rucio-admin rse set-attribute --rse ${rse} --key ALL --value 1
-rucio-admin rse set-attribute --rse ${rse} --key ligo_lab --value 1
+rucio-admin rse set-attribute --rse ${rse} --key LIGO_LAB --value 1
 rucio-admin rse set-attribute --rse ${rse} --key fts --value https://fts.mwt2.org:8446
 rucio-admin rse set-attribute --rse ${rse} --key fts_testing --value https://fts.mwt2.org:8446
