@@ -14,13 +14,7 @@ rucio-admin rse add-protocol\
 
 
 # FTS configuration
-rucio-admin rse set-attribute --rse LIGO-CIT-HDFS --key fts --value https://fts.mwt2.org:8446
-rucio-admin rse set-attribute --rse LIGO-CIT-HDFS --key fts_testing --value https://fts.mwt2.org:8446
-
 # Disk quota
 rucio-admin -a root account set-limits root LIGO-CIT-HDFS 1000000000000
 
-# Make this part of the LIGO lab network
-rucio-admin rse set-attribute --rse LIGO-CIT-HDFS --key ligo_lab --value True
-rucio-admin rse set-attribute --rse LIGO-CIT-HDFS --key hdfs --value True
 
