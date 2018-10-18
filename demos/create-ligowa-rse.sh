@@ -36,13 +36,7 @@ rucio-admin rse add-protocol\
     LIGO-WA
 
 
-# FTS configuration
-rucio-admin rse set-attribute --rse LIGO-WA --key fts --value https://fts.mwt2.org:8446
-rucio-admin rse set-attribute --rse LIGO-WA --key fts_testing --value https://fts.mwt2.org:8446
-
 # Disk quota
 rucio-admin -a root account set-limits root LIGO-WA 1000000000000
 
-# Make this part of the LIGO lab network
-rucio-admin rse set-attribute --rse LIGO-WA --key ligo_lab --value True
 

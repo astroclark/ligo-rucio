@@ -1,14 +1,22 @@
-#!/bin/sh -x
+#!/bin/sh -ex
 ./rse_distance LIGO-CIT LIGO-CIT-ARCHIVE
 ./rse_distance LIGO-CIT LIGO-CIT-HDFS
 ./rse_distance LIGO-CIT LIGO-WA-HDFS
+
 ./rse_distance LIGO-CIT-ARCHIVE LIGO-CIT
 ./rse_distance LIGO-CIT-ARCHIVE LIGO-CIT-HDFS
 ./rse_distance LIGO-CIT-ARCHIVE LIGO-WA-HDFS
+
 ./rse_distance LIGO-CIT-HDFS LIGO-CIT
 ./rse_distance LIGO-CIT-HDFS LIGO-CIT-ARCHIVE
 ./rse_distance LIGO-CIT-HDFS LIGO-WA-HDFS
+
 ./rse_distance LIGO-WA-HDFS LIGO-CIT
 ./rse_distance LIGO-WA-HDFS LIGO-CIT-ARCHIVE
 ./rse_distance LIGO-WA-HDFS LIGO-CIT-HDFS
 
+./rse_distance UNL LIGO-WA-HDFS
+./rse_distance UNL LIGO-WA
+./rse_distance UNL LIGO-CIT
+./rse_distance UNL LIGO-CIT-ARCHIVE
+./rse_distance UNL LIGO-CIT-HDFS
