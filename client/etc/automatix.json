@@ -1,0 +1,13 @@
+{
+"type1": {
+                "probability": 100,
+                "nbfiles": 1,
+                "filesize": 1000000,
+                "metadata":
+                {
+                        "project": "LIGO",
+                        "datatype": "RAW",
+                        "prod_step": "rucio-test"
+                }
+        }
+}
