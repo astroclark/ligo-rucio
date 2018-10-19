@@ -1,11 +1,19 @@
-#!/bin/bash
+#!/bin/sh -e
 
-rucio-admin rse add LIGOTESTCIT
+# Create RSE
+rucio-admin rse add TEST-LIGO-CIT 
 
+# Define copying protocol
 rucio-admin rse add-protocol\
-    --prefix /home/jclark/Projects/ligo-rucio \
+    --prefix  /mnt/rucio/tests \
+    --hostname ldas-pcdev6.ligo.caltech.edu \
     --domain-json '{"wan": {"read": 1, "write": 1, "delete": 1, "third_party_copy": 1}}' \
     --scheme gsiftp \
-    --hostname ldas-pcdev2.ligo.caltech.edu\
     --port 2811 \
-    LIGOTESTCIT
+    TEST-LIGO-CIT
+
+
+# Disk quota
+rucio-admin account set-limits root TEST-LIGO-CIT 1000000000000
+
+
