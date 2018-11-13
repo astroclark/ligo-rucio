@@ -1,4 +1,0 @@
-#/bin/sh -e
-rucio-admin rse add-distance --distance 1 --ranking 1 $1 $2
-rucio-admin rse add-distance --distance 1 --ranking 1 $2 $1
-
