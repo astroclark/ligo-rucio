@@ -1,0 +1,17 @@
+#!/bin/bash -e
+
+# Modify a protocol: only able to do this by deletion, recreation
+
+rucio-admin rse delete-protocol\
+    --hostname ldas-pcdev6.ligo.caltech.edu\
+    --scheme gsiftp \
+    LIGO-CIT
+
+rucio-admin rse add-protocol\
+    --prefix /mnt/rucio \
+    --hostname ldas-pcdev6.ligo.caltech.edu\
+    --domain-json '{"wan": {"read": 1, "write": 1, "delete": 1, "third_party_copy": 1}}' \
+    --scheme gsiftp \
+    --port 2811 \
+    --impl rucio.rse.protocols.gfal.Default \
+    LIGO-CIT
