@@ -1,0 +1,10 @@
+#!/bin/sh -e
+
+# Get ascii list of frames with e.g., ls -d -1 $PWD/**/*gwf.  Ideally use DiskCache.
+# Better yet: find $PWD -type f -name *gwf
+ligo_register_data \
+    --rse LIGO-CIT-ARCHIVE \
+    --scope ER8 \
+    --debug --verbose \
+  /hdfs/frames/ER8/hoft/H1/H-H1_HOFT_C00-11238/H-H1_HOFT_C00-1123897344-4096.gwf
+

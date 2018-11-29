@@ -1,0 +1,10 @@
+#!/bin/sh -e
+
+# Hack to build file list: find FRAMEPATH -type f -name *gwf
+ligo_register_data \
+    --rse LIGO-CIT-ARCHIVE \
+    --scope ER8 \
+    --dataset-name H-H1_HOFT_C00-11238 \
+    --debug --verbose \
+    --lifetime 1800 \
+    --file-cache H-H1_R-11238_0-4.txt
