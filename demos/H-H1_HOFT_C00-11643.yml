@@ -6,7 +6,6 @@ H1_ER10_hoft:
    - H
   interferometer-list:
    - H1
-  minimum-gps: 1164390400
-  maximum-gps: 1164345344
+  minimum-gps: 1227902976
+  maximum-gps: 2000000000
   rse: LIGO-CIT
-  diskcache: "/var/lib/diskcache/frame_cache.txt"
