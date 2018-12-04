@@ -1,0 +1,10 @@
+#!/bin/bash
+minimum_gps=1227902976
+maximum_gps=2000000000
+regexp="H1_R"
+prog="/home/jclark/src/gwrucio/ligo_rucio/diskcache.py"
+cachefile="frame_cache_dump"
+python ${prog} ${cachefile} \
+  --gps-min ${minimum_gps} --gps-max ${maximum_gps} \
+  --regexp ${regexp} \
+  --command expand --exists
