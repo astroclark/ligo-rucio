@@ -1,0 +1,12 @@
+H1_ER10_hoft:
+  scope: "ER10"
+  dataset-name: "H-H1_HOFT_C00-11239"
+  frame-type: "H-H1_HOFT_C00"
+  site-list:
+   - H
+  interferometer-list:
+   - H1
+  minimum-gps: 1164390400
+  maximum-gps: 1164345344
+  rse: LIGO-CIT
+  diskcache: "/var/lib/diskcache/frame_cache.txt"

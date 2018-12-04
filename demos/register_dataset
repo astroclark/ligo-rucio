@@ -1,7 +1,7 @@
 #!/bin/sh -e
 
 # Hack to build file list: find FRAMEPATH -type f -name *gwf
-ligo_register_data -p H-H1_HOFT_C00-11643-files.yaml \
+ligo_register_data -p H-H1_HOFT_C00-11643.yml \
 	--dry-run --verbose \
 	add-files --lifetime 600 \
   /cvmfs/oasis.opensciencegrid.org/ligo/frames/ER10/hoft/H1/H-H1_HOFT_C00-11643/H-H1_HOFT_C00-1164353536-4096.gwf \
