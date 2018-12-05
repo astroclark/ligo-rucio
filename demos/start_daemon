@@ -2,4 +2,5 @@
 
 # Hack to build file list: find FRAMEPATH -type f -name *gwf
 ligo_register_data -p H-H1_HOFT_C00-11643.yml \
-  --dry-run --verbose --lifetime 600 daemon
+  --dry-run --verbose --lifetime 600 daemon \
+  /home/jclark/Projects/ligo-rucio/demos/frame_cache_dump
