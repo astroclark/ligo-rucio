@@ -1,0 +1,65 @@
+#! /bin/sh
+
+diskcache_cmd="/bin/diskcache"
+outputdir="/home/jclark/Projects/ligo-rucio/diskcache"
+configfile="${outputdir}/diskcache.rsc"
+output_binary="${outputdir}/.frame.cache"
+
+virtual_memory_limit="`expr 4 \* 1000 \* 1000`"
+
+# LD_PRELOAD="/usr/lib/64/libgcc_s.so.1 /usr/lib/64/libstdc++.so.6"
+
+LD_LIBRARY_PATH=""
+export LD_LIBRARY_PATH
+LD_LIBRARY_PATH_64=""
+export LD_LIBRARY_PATH_64
+
+#PATH=/opt/csw/bin:/usr/bin
+PATH=/bin:/usr/bin
+export PATH
+
+# --------------------------------------------------------------------------
+# Establish the file to seed the cache
+# --------------------------------------------------------------------------
+if test -f ${output_binary}
+then
+    cache="${output_binary}"
+fi
+if test -f "${output_binary}#Resync#"
+then
+  case "x${cache}" in
+  x) cache="${output_binary}#Resync#";;
+  *) if test "${output_binary}#Resync#" -nt ${cache}
+     then
+       cache="${output_binary}#Resync#"
+     fi;;
+  esac
+fi
+case "x${cache}" in
+x) ;;
+*) seed="--cache-file ${cache}";;
+esac
+
+# --------------------------------------------------------------------------
+#  Set a resouce limit to make sure we never kill a box
+# --------------------------------------------------------------------------
+
+ulimit -v ${virtual_memory_limit}
+
+# --------------------------------------------------------------------------
+# Establish the file to seed the cache
+# --------------------------------------------------------------------------
+
+mkdir -p "${outputdir}/logs"
+echo $LD_LIBRARY_PATH
+echo $LD_LIBRARY_PATH_64
+ldd ${diskcache_cmd} 
+
+nohup ${diskcache_cmd} ${seed} \
+    daemon \
+    --configuration-file ${configfile} \
+    > ${outputdir}/diskcache_stdout_stderr.log 2>&1 &
+echo $! > diskcache_pid
+echo Process started as `cat diskcache_pid`
+
+exit 0
