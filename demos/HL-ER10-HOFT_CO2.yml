@@ -1,0 +1,21 @@
+H1_ER10_HOFT_C02:
+  scope: "ER10"
+  frame-type: "H-H1_HOFT_C02"
+  site-list:
+   - H
+  interferometer-list:
+   - H1
+  minimum-gps: 1164500992
+  maximum-gps: 2000000000
+  rse: LIGO-CIT
+
+L1_ER10_HOFT_C02:
+  scope: "ER10"
+  frame-type: "L-L1_HOFT_C02"
+  site-list:
+   - L
+  interferometer-list:
+   - L1
+  minimum-gps: 1164500992
+  maximum-gps: 2000000000
+  rse: LIGO-CIT

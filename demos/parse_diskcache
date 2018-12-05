@@ -1,11 +1,31 @@
 #!/bin/bash
-minimum_gps=1227902976
+
+#
+# Example lifted from LDRslave: ER10
+#
+#   minimum_gps=1227902976
+#   maximum_gps=2000000000
+#   regexp="H1_R"
+#   prog="/home/jclark/src/gwrucio/ligo_rucio/diskcache.py"
+#   cachefile="frame_cache_dump"
+#   python ${prog} ${cachefile} \
+#     --gps-min ${minimum_gps} --gps-max ${maximum_gps} \
+#     --regexp ${regexp} --command expand --exists --no-prune
+#     #--regexp ${regexp}
+#     #--regexp ${regexp} --command raw
+
+#
+# My toy example: ER8
+#
+minimum_gps=1164500992
 maximum_gps=2000000000
-regexp="H1_R"
+regexp="H1_HOFT_C02"
 prog="/home/jclark/src/gwrucio/ligo_rucio/diskcache.py"
-cachefile="frame_cache_dump"
+cachefile="/home/jclark/Projects/ligo-rucio/diskcache/frame_cache_dump"
 python ${prog} ${cachefile} \
   --gps-min ${minimum_gps} --gps-max ${maximum_gps} \
-  --regexp ${regexp} --command expand --exists --no-prune
-  #--regexp ${regexp}
+  --regexp ${regexp}
+  #--regexp ${regexp} --command expand --exists --no-prune
   #--regexp ${regexp} --command raw
+
+

@@ -1,0 +1,7 @@
+#!/bin/sh -e
+
+OMP_NUM_THREADS=10
+
+ligo_register_data -p H1-ER10-HOFT_CO2.yml \
+	--dry-run --verbose --lifetime 600 \
+	add-files $(< H1-ER10-HOFT_CO2.txt)

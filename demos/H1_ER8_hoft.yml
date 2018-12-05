@@ -1,0 +1,10 @@
+H1_ER8_hoft:
+  scope: "ER8"
+  frame-type: "H-H1_HOFT_C00"
+  site-list:
+   - H
+  interferometer-list:
+   - H1
+  minimum-gps: 1125003264
+  maximum-gps: 2000000000
+  rse: LIGO-CIT
