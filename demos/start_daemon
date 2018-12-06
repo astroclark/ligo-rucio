@@ -1,8 +1,22 @@
 #!/bin/sh -e
 
 OMP_NUM_THREADS=100
-ligo_register_data -p HL-ER10-HOFT_CO2.yml \
-  --dry-run --verbose --lifetime 600 daemon \
-  /home/jclark/Projects/ligo-rucio/diskcache/frame_cache_dump
+register_cmd="ligo_register_data"
+configfile="HL-ER10-HOFT_CO2.yml"
+cachefile="/home/jclark/Projects/ligo-rucio/diskcache/frame_cache_dump"
+lifetime=600
 
-# ligo_register_data -p HL-ER10-HOFT_CO2.yml --dry-run --verbose --lifetime 600 daemon /home/jclark/Projects/ligo-rucio/diskcache/frame_cache_dump 
+## Interactive
+#   ${register_cmd} -p ${configfile} \
+#     --dry-run --verbose --lifetime ${lifetime} \
+#     daemon ${cachefile}
+
+## Background
+nohup ${register_cmd} -p ${configfile} \
+  --dry-run --verbose --lifetime ${lifetime} \
+  daemon ${cachefile} > ligo_register_data_stdout_stderr.log 2>&1 &
+echo $! > diskcache_pid
+echo Process started as `cat diskcache_pid`
+
+
+exit 0
