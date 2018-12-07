@@ -1,22 +1,22 @@
 #!/bin/sh -e
 
-OMP_NUM_THREADS=100
+export OMP_NUM_THREADS=100
 register_cmd="ligo_register_data"
-configfile="HL-ER10-HOFT_CO2.yml"
+configfile="ER10-HOFT_C02.yml"
 cachefile="/home/jclark/Projects/ligo-rucio/diskcache/frame_cache_dump"
-lifetime=600
+lifetime=3600
 
 ## Interactive
-#   ${register_cmd} -p ${configfile} \
-#     --dry-run --verbose --lifetime ${lifetime} \
-#     daemon ${cachefile}
+${register_cmd} -p ${configfile} \
+  --dry-run --verbose --lifetime ${lifetime} \
+  daemon ${cachefile} --run-once
 
 ## Background
-nohup ${register_cmd} -p ${configfile} \
-  --dry-run --verbose --lifetime ${lifetime} \
-  daemon ${cachefile} > ligo_register_data_stdout_stderr.log 2>&1 &
-echo $! > diskcache_pid
-echo Process started as `cat diskcache_pid`
-
+#   nohup ${register_cmd} -p ${configfile} \
+#     --dry-run --verbose --lifetime ${lifetime} \
+#     daemon ${cachefile} > ligo_register_data_stdout_stderr.log 2>&1 &
+#   echo $! > register_pid
+#   echo Process started as `cat diskcache_pid`
+#
 
 exit 0
