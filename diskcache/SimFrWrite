@@ -1,0 +1,30 @@
+#!/bin/bash -e
+
+#------------------------------------------------------------------------
+# Source and destination configuration
+srcprefix="/hdfs/frames"
+src="${srcprefix}/ER10/hoft_C02/"
+destprefix="/home/jclark/Projects/ligo-rucio/diskcache/frames"
+
+# Number of seconds to pause between copying
+snoozetime=5
+#------------------------------------------------------------------------
+
+# Identify all frames
+frames=$(find ${src} -type f -name *gwf)
+
+# Copy each frame from the source to the destination 
+for frame in ${frames}
+do
+    # Get parent directory and replace source prefix with destination prefix
+    dest=$(dirname $(echo ${frame} | sed "s|${srcprefix}|${destprefix}|"))
+
+    # Set up destination and copy
+    mkdir -p ${dest}
+    echo "Copying ${frame} -> ${dest}"
+    rsync -vzP ${frame} ${dest}
+
+    # Introduce a pause to simulate data aquisition and frame writing
+    echo "pausing for ${snoozetime}"
+    sleep ${snoozetime}
+done

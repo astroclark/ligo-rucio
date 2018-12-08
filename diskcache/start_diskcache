@@ -58,7 +58,7 @@ ldd ${diskcache_cmd}
 nohup ${diskcache_cmd} ${seed} \
     daemon \
     --configuration-file ${configfile} \
-    > ${outputdir}/diskcache_stdout_stderr.log 2>&1 &
+    > ${outputdir}/logs/diskcache_stdout_stderr.log 2>&1 &
 echo $! > diskcache_pid
 echo Process started as `cat diskcache_pid`
 
