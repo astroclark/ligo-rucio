@@ -8,7 +8,7 @@ observations:
 diskcache:
 	./start_diskcache
 
-clean:
+stop:
 ifneq ("$(wildcard SimFrWrite_pid)","") 
 	kill -9 $$(cat SimFrWrite_pid)
 	rm -f SimFrWrite_pid
@@ -17,6 +17,8 @@ ifneq ("$(wildcard diskcache_pid)","")
 	kill -9 $$(cat diskcache_pid)
 	rm -f diskcache_pid
 endif 
+
+clean: stop
 	rm -f logs/*
 	rm -rf frames/*
 	rm -f frame_cache_dump*
