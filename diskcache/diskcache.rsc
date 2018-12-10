@@ -23,6 +23,4 @@ DIRECTORY_TIMEOUT=60
 [EXCLUDED_DIRECTORIES]
 
 [MOUNT_POINTS]
-#/hdfs/frames/ER10/hoft_C02/H1
-#/hdfs/frames/ER10/hoft_C02/L1
 /home/jclark/Projects/ligo-rucio/diskcache/frames

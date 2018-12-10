@@ -3,11 +3,11 @@
 #------------------------------------------------------------------------
 # Source and destination configuration
 srcprefix="/hdfs/frames"
-src="${srcprefix}/ER10/hoft_C02/"
+src="${srcprefix}/ER10/hoft_C01/"
 destprefix="/home/jclark/Projects/ligo-rucio/diskcache/frames"
 
 # Number of seconds to pause between copying
-snoozetime=5
+snoozetime=60
 #------------------------------------------------------------------------
 
 # Identify all frames
