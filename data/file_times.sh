@@ -13,9 +13,10 @@ for frame in `ls ${framedir}/*gwf | tail`; do
     created=$(stat -c %Y ${frame})
 
     echo "------------ ${frame} -------------"
-    echo -e "Frame epoch\t|\tFile created"
-    echo -e "${frame_epoch_h}\t|\t${created_h}"
-    #echo -e "${frame_epoch}\t|\t${created}"
+    echo "Frame epoch: ${frame_epoch_h}"
+    echo "File created: ${created_h}"
+#    echo -e "${frame_epoch_h}\t|\t${created_h}"
+#    #echo -e "${frame_epoch}\t|\t${created}"
     #echo "Seconds different: $((created-frame_epoch))"
 
     echo ""

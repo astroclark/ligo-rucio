@@ -1,7 +1,7 @@
 #!/bin/sh -e
 
 export OMP_NUM_THREADS=100
-register_cmd="ligo_register_data"
+register_cmd="gwrucio_register_data"
 configfile="ER10-H1_HOFT_C01.yml"
 daemon_sleep=30
 cachefile="/home/jclark/Projects/ligo-rucio/diskcache/frame_cache_dump"
