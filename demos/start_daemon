@@ -1,0 +1,28 @@
+#!/bin/sh -e
+
+export OMP_NUM_THREADS=100
+register_cmd="ligo_register_data"
+configfile="ER10-H1_HOFT_C01.yml"
+daemon_sleep=30
+cachefile="/home/jclark/Projects/ligo-rucio/diskcache/frame_cache_dump"
+logfile="${register_cmd}_stdout_stderr.log"
+lifetime=3600
+
+
+## Build command
+#  --verbose --lifetime ${lifetime} --force-checksums \
+cmdline="${register_cmd} -p ${configfile} --verbose \
+    daemon --daemon-sleep ${daemon_sleep} \
+    ${cachefile}"
+
+echo "Executing:"
+echo $cmdline
+echo "Outputting logs to: ${logfile}"
+
+## Run process in background
+nohup ${cmdline} > ${logfile} 2>&1 &
+echo $! > register_pid
+echo Process started as `cat register_pid`
+
+
+exit 0

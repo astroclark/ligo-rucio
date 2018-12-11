@@ -1,0 +1,8 @@
+#!/bin/sh -e
+
+export OMP_NUM_THREADS=100
+
+ligo_register_data -p ER10-HOFT_C02.yml \
+	--verbose --lifetime 3600 \
+	add-files $(< ER10-H1_HOFT_C02.txt) \
+    --pset H1_ER10_HOFT_C02

@@ -1,0 +1,12 @@
+#!/bin/bash
+
+minimum_gps=1163174417
+maximum_gps=1164556817
+regexp="H1_HOFT_C02"
+prog="/home/jclark/src/gwrucio/ligo_rucio/diskcache.py"
+cachefile="/home/jclark/Projects/ligo-rucio/diskcache/frame_cache_dump"
+python ${prog} ${cachefile} \
+  --gps-min ${minimum_gps} --gps-max ${maximum_gps} \
+  --regexp ${regexp}
+
+

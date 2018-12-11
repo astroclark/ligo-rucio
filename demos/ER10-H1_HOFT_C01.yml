@@ -1,0 +1,7 @@
+H-H1_HOFT_C01:
+  scope: "ER10"
+  regexp: "H-H1_HOFT_C01"
+  minimum-gps: 1163174417
+  maximum-gps: 1164556817
+  rse: LIGO-CIT-ARCHIVE
+
