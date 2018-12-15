@@ -2,9 +2,7 @@
 
 rucio -v upload \
     --summary \
-    --scope ER8 --rse LIGO-CIT \
+    --scope postO1 --rse LIGO-CIT \
     --protocol gsiftp \
-    /hdfs/frames/ER8/hoft_C02/H1/H-H1_HOFT_C02-11260/H-H1_HOFT_C02-1126096896-4096.gwf
-  #--name H-H1_HOFT_C02-1137242112-4096.gwf\
-  #--pfn gsiftp://ldas-pcdev2.ligo.caltech.edu:2811/home/jclark/Projects/ligo-rucio/data/TEST/test.gwf \
-  #--no-register 
+    --pfn /archive/rucio/postO1/hoft/H1/H-H1_HOFT_C00-11631/H-H1_HOFT_C00-1163100160-4096.gwf \
+    ER13:H-H1_HOFT_C00-1163100160-4096.gwf
